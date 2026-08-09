@@ -10,19 +10,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <style>
-        /* ── ROOT ── */
         :root {
             --bg-dark: #0a0a12;
-            --glass-bg: rgba(255, 255, 255, 0.06);
-            --glass-border: rgba(255, 255, 255, 0.10);
-            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --card-bg: rgba(18, 18, 32, 0.6);
             --neon-blue: #00f0ff;
             --neon-purple: #b300ff;
             --neon-pink: #ff00a6;
-            --neon-gold: #ffd700;
             --text-primary: #ffffff;
-            --text-secondary: #b0b0d0;
-            --blur-amount: 20px;
+            --text-secondary: #a0a0c0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.2);
         }
         * {
             margin: 0;
@@ -36,13 +33,10 @@
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(179, 0, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.03) 0%, transparent 70%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(179, 0, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
         }
 
-        /* ── LOADER ── */
         .loader {
             position: fixed;
             inset: 0;
@@ -62,10 +56,10 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.08);
+            border: 4px solid rgba(255, 255, 255, 0.1);
             border-top: 4px solid var(--neon-blue);
             animation: spin 1s linear infinite;
-            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 30px var(--neon-blue);
         }
         @keyframes spin {
             100% {
@@ -73,22 +67,13 @@
             }
         }
 
-        /* ── GLASS MIXIN ── */
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--blur-amount));
-            -webkit-backdrop-filter: blur(var(--blur-amount));
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-        }
-
-        /* ── SECTION 1: HERO ── */
+        /* --- SECTION 1: ENTERTAINMENT HERO HEADER --- */
         .header {
             text-align: center;
-            padding: 5rem 1.5rem 3.5rem;
+            padding: 6rem 1.5rem 4rem;
             position: relative;
             overflow: hidden;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
         }
         .header::before {
             content: '';
@@ -96,17 +81,17 @@
             inset: 0;
             z-index: 0;
             pointer-events: none;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.06) 0%, transparent 60%);
-            animation: heroSpotlight 6s infinite alternate ease-in-out;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 60%);
+            animation: heroSpotlight 5s infinite alternate ease-in-out;
         }
         @keyframes heroSpotlight {
             0% {
-                opacity: 0.4;
+                opacity: 0.5;
                 transform: scale(1);
             }
             100% {
                 opacity: 1;
-                transform: scale(1.4);
+                transform: scale(1.3);
             }
         }
         .header * {
@@ -116,13 +101,12 @@
         .header h1 {
             font-size: clamp(2.5rem, 8vw, 5rem);
             font-weight: 900;
-            background: linear-gradient(135deg, #ffd700, #ff2d00, var(--neon-pink), #ffd700);
+            background: linear-gradient(135deg, #ffd700, #ff0000, var(--neon-pink), #ffd700);
             background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradientMove 6s ease-in-out infinite;
-            text-shadow: none;
-            filter: drop-shadow(0 0 40px rgba(255, 0, 0, 0.25));
+            text-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
         }
         @keyframes gradientMove {
             0% {
@@ -138,19 +122,18 @@
         .header p {
             color: var(--text-secondary);
             margin-top: 0.5rem;
-            font-size: 0.95rem;
-            letter-spacing: 3px;
+            font-size: 1rem;
+            letter-spacing: 2px;
             color: #fff;
-            opacity: 0.7;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
-        /* ── SECTION 2: JOKES ZONE (MODERN) ── */
-        .jokes-modern {
+        /* --- SECTION 2 & 3: ZONE BANNERS (Jokes & Cinema) --- */
+        .zone-banner {
             max-width: 1400px;
-            margin: 2.5rem auto 1.5rem;
-            padding: 3rem 2.5rem;
-            border-radius: 40px;
+            margin: 2.5rem auto;
+            padding: 3rem 2rem;
+            border-radius: 32px;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -158,102 +141,104 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
             text-decoration: none;
             color: #fff;
             min-height: 200px;
-            background: rgba(255, 215, 0, 0.05);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 215, 0, 0.20);
-            box-shadow: 0 8px 40px rgba(255, 215, 0, 0.08), inset 0 1px 0 rgba(255, 215, 0, 0.15);
-            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            gap: 1rem;
         }
-        .jokes-modern:hover {
-            transform: translateY(-6px) scale(1.01);
-            border-color: rgba(255, 215, 0, 0.5);
-            box-shadow: 0 16px 60px rgba(255, 215, 0, 0.18), inset 0 1px 0 rgba(255, 215, 0, 0.25);
-        }
-        .jokes-modern::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 40px;
-            padding: 2px;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), transparent 40%, transparent 60%, rgba(255, 215, 0, 0.2));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-        .jokes-modern .emoji-float {
-            position: absolute;
-            font-size: 8rem;
-            opacity: 0.06;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .jokes-modern .emoji-float:nth-child(1) {
-            top: -30px;
-            right: -20px;
-            transform: rotate(12deg);
-        }
-        .jokes-modern .emoji-float:nth-child(2) {
-            bottom: -40px;
-            left: -30px;
-            transform: rotate(-8deg);
-            font-size: 10rem;
-        }
-        .jokes-modern h2 {
-            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+        .zone-banner h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
             font-weight: 900;
-            letter-spacing: 2px;
-            z-index: 2;
-            background: linear-gradient(135deg, #ffd700, #ffb300);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.15));
-        }
-        .jokes-modern p {
-            font-size: 0.95rem;
-            z-index: 2;
-            opacity: 0.8;
-            color: #e8e0c0;
             letter-spacing: 1px;
-            max-width: 500px;
+            z-index: 2;
         }
-        .jokes-modern .zone-btn {
-            background: rgba(255, 215, 0, 0.12);
-            padding: 0.8rem 2.8rem;
+        .zone-banner p {
+            font-size: 0.9rem;
+            z-index: 2;
+            opacity: 0.9;
+        }
+        .zone-banner .zone-btn {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.8rem 2.5rem;
             border-radius: 50px;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #ffd700;
+            border: 2px solid #fff;
+            color: #fff;
             font-weight: 700;
             font-size: 0.9rem;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             z-index: 2;
-            transition: 0.4s;
-            backdrop-filter: blur(8px);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            transition: 0.3s;
+            margin-top: 0.5rem;
         }
-        .jokes-modern .zone-btn i {
-            font-size: 1.1rem;
-        }
-        .jokes-modern:hover .zone-btn {
-            background: #ffd700;
-            color: #0a0a12;
-            border-color: #ffd700;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+        .zone-banner:hover .zone-btn {
+            background: #fff;
+            color: #000;
             transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        .zone-banner:hover {
+            transform: translateY(-4px);
         }
 
-        /* ── SECTION 3: GAME ARCADE CONTROLS ── */
+        /* Jokes Zone Visuals */
+        .zone-jokes {
+            background: linear-gradient(135deg, #2a0a0a 0%, #4a1515 50%, #1a0a0a 100%);
+            border-color: #ffd700;
+            background-image: repeating-linear-gradient(45deg, rgba(255, 215, 0, 0.05) 0px, rgba(255, 215, 0, 0.05) 1px, transparent 1px, transparent 10px);
+        }
+        .zone-jokes::after {
+            content: '😂';
+            position: absolute;
+            right: -50px;
+            bottom: -50px;
+            font-size: 15rem;
+            opacity: 0.1;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Cinema Zone Visuals (IMAX / Hollywood Vibe) */
+        .zone-cinema {
+            background: #000;
+            border-color: #ff0000;
+        }
+        .zone-cinema::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            animation: cinemaSpotlight 4s infinite ease-in-out alternate;
+        }
+        @keyframes cinemaSpotlight {
+            0% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.6);
+            }
+        }
+        .zone-cinema::after {
+            content: '🎬';
+            position: absolute;
+            left: -30px;
+            top: -30px;
+            font-size: 8rem;
+            opacity: 0.1;
+            z-index: 1;
+            pointer-events: none;
+            transform: rotate(-15deg);
+        }
+
+        /* --- SECTION 4: GAME GRID CONTROLS --- */
         .controls {
             max-width: 1400px;
-            margin: 3rem auto 1.5rem;
+            margin: 3rem auto 2rem;
             padding: 0 1rem;
             display: flex;
             flex-wrap: wrap;
@@ -264,33 +249,26 @@
             flex: 1;
             min-width: 250px;
             position: relative;
-            border-radius: 60px;
-            padding: 0.5rem 1.8rem;
+            background: var(--card-bg);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 0.5rem 1.5rem;
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-glow);
         }
         .search-wrap i {
             color: var(--text-secondary);
-            opacity: 0.5;
         }
         .search-wrap input {
             background: transparent;
             border: none;
-            padding: 0.8rem 0.8rem 0.8rem 0.5rem;
+            padding: 0.8rem;
             width: 100%;
             color: #fff;
             font-family: inherit;
             outline: none;
-            font-size: 0.9rem;
-        }
-        .search-wrap input::placeholder {
-            color: rgba(255, 255, 255, 0.25);
-            letter-spacing: 0.5px;
         }
 
         .category-nav {
@@ -299,74 +277,61 @@
             gap: 0.6rem;
             justify-content: center;
             margin-bottom: 2rem;
-            padding: 0 1rem;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
         }
         .category-btn {
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--card-bg);
             color: var(--text-secondary);
-            padding: 0.6rem 1.6rem;
-            border-radius: 40px;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid transparent;
             font-family: inherit;
             font-weight: 700;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: 0.3s;
+            font-size: 0.85rem;
+            backdrop-filter: blur(4px);
         }
-        .category-btn:hover {
-            background: rgba(0, 240, 255, 0.08);
-            color: #fff;
-            border-color: rgba(0, 240, 255, 0.25);
-            transform: translateY(-2px);
-        }
+        .category-btn:hover,
         .category-btn.active {
-            background: rgba(0, 240, 255, 0.12);
+            background: rgba(0, 240, 255, 0.1);
             color: #fff;
             border-color: var(--neon-blue);
-            box-shadow: 0 0 24px rgba(0, 240, 255, 0.10);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+            transform: translateY(-2px);
         }
 
-        /* ── GAME GRID ── */
+        /* --- GAME GRID --- */
         .game-grid {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 1rem 4rem;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.8rem;
         }
         .game-card {
-            border-radius: 28px;
+            background: var(--card-bg);
+            border-radius: 24px;
             overflow: hidden;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
             text-decoration: none;
             color: #fff;
             display: flex;
             flex-direction: column;
             position: relative;
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
             transform: translateY(0);
-            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         .game-card:hover {
             transform: translateY(-8px) scale(1.02);
-            border-color: rgba(0, 240, 255, 0.25);
-            box-shadow: 0 16px 56px rgba(0, 240, 255, 0.10);
+            border-color: var(--neon-blue);
+            box-shadow: 0 12px 40px rgba(0, 240, 255, 0.25);
         }
         .game-card .img-wrap {
             width: 100%;
             height: 180px;
             overflow: hidden;
-            background: rgba(20, 20, 40, 0.6);
+            background: #16162a;
             position: relative;
             display: flex;
             align-items: center;
@@ -379,41 +344,40 @@
             transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .game-card:hover img {
-            transform: scale(1.10);
+            transform: scale(1.1);
         }
+
         .game-card .badge {
             position: absolute;
             top: 12px;
             right: 12px;
             background: var(--neon-pink);
             color: #fff;
-            padding: 0.25rem 0.9rem;
+            padding: 0.3rem 0.8rem;
             border-radius: 20px;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             z-index: 2;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 0 20px rgba(255, 0, 166, 0.2);
         }
         .game-card .phone-badge {
             position: absolute;
             bottom: 12px;
             right: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #00ff88;
-            padding: 0.25rem 0.9rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ff00;
+            padding: 0.3rem 0.8rem;
             border-radius: 20px;
-            font-size: 0.6rem;
-            border: 1px solid rgba(0, 255, 136, 0.2);
+            font-size: 0.7rem;
+            border: 1px solid #00ff00;
             font-weight: 700;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(4px);
             z-index: 2;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
+
         .game-card .info {
             padding: 1.2rem 1.5rem 1.5rem;
             flex: 1;
@@ -421,232 +385,72 @@
             flex-direction: column;
         }
         .game-card h3 {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
         .game-card .cat-tag {
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
             margin-top: 0.3rem;
-            opacity: 0.6;
         }
         .game-card .play-icon {
             margin-top: auto;
             align-self: flex-start;
-            background: rgba(0, 240, 255, 0.12);
-            color: var(--neon-blue);
-            padding: 0.35rem 1.4rem;
-            border-radius: 30px;
-            font-size: 0.65rem;
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
             font-weight: 700;
             letter-spacing: 1px;
             margin-top: 1rem;
-            border: 1px solid rgba(0, 240, 255, 0.10);
-            transition: 0.3s;
-            backdrop-filter: blur(4px);
         }
         .game-card:hover .play-icon {
-            background: var(--neon-blue);
-            color: #0a0a12;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+            background: #fff;
         }
 
-        .img-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            color: rgba(255, 255, 255, 0.10);
-            font-size: 4rem;
-            width: 100%;
-            height: 100%;
-            background: rgba(20, 20, 40, 0.4);
-        }
-
-        /* ── SECTION 4: 1000+ GAMES (Glass version) ── */
+        /* --- SECTION 5: EXTERNAL GAMES (1000+) --- */
         .ext-games-banner {
             max-width: 1400px;
-            margin: 0 auto 3rem;
+            margin: 0 auto 5rem;
             padding: 3rem 2rem;
-            border-radius: 40px;
+            border-radius: 32px;
             text-align: center;
+            background: linear-gradient(135deg, #0a1a2c, #0a0a12);
+            border: 2px solid var(--neon-blue);
             text-decoration: none;
             color: #fff;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            background: rgba(0, 240, 255, 0.04);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(0, 240, 255, 0.12);
-            box-shadow: 0 8px 40px rgba(0, 240, 255, 0.04), inset 0 1px 0 rgba(0, 240, 255, 0.08);
-            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+            transition: 0.4s;
         }
         .ext-games-banner:hover {
-            transform: translateY(-4px) scale(1.01);
-            border-color: rgba(0, 240, 255, 0.30);
-            box-shadow: 0 16px 60px rgba(0, 240, 255, 0.12);
+            transform: scale(1.02);
+            box-shadow: 0 0 60px rgba(0, 240, 255, 0.4);
         }
         .ext-games-banner h2 {
-            font-size: clamp(1.8rem, 3vw, 2.6rem);
+            font-size: 2.5rem;
             font-weight: 900;
-            letter-spacing: 1px;
-            background: linear-gradient(135deg, #00f0ff, #0088ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.10));
-        }
-        .ext-games-banner p {
-            opacity: 0.6;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
         }
         .ext-games-banner .play-icon {
-            background: rgba(0, 240, 255, 0.10);
-            color: var(--neon-blue);
-            padding: 0.7rem 3rem;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            border: 1px solid rgba(0, 240, 255, 0.15);
-            backdrop-filter: blur(8px);
-            transition: 0.4s;
-        }
-        .ext-games-banner:hover .play-icon {
             background: var(--neon-blue);
-            color: #0a0a12;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
-            transform: scale(1.05);
-        }
-
-        /* ── SECTION 5: CINEMA ZONE (BOTTOM) ── */
-        .cinema-bottom {
-            max-width: 1400px;
-            margin: 2rem auto 4rem;
-            padding: 3rem 2.5rem;
-            border-radius: 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            text-decoration: none;
-            color: #fff;
-            min-height: 200px;
-            background: rgba(255, 0, 0, 0.04);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 0, 0, 0.12);
-            box-shadow: 0 8px 40px rgba(255, 0, 0, 0.04), inset 0 1px 0 rgba(255, 0, 0, 0.08);
-            transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .cinema-bottom:hover {
-            transform: translateY(-6px) scale(1.01);
-            border-color: rgba(255, 0, 0, 0.30);
-            box-shadow: 0 16px 60px rgba(255, 0, 0, 0.10);
-        }
-        .cinema-bottom::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 40px;
-            padding: 2px;
-            background: linear-gradient(135deg, rgba(255, 0, 0, 0.25), transparent 40%, transparent 60%, rgba(255, 0, 0, 0.15));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-        .cinema-bottom .cinema-glow {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
-            animation: cinemaPulse 4s infinite ease-in-out alternate;
-        }
-        @keyframes cinemaPulse {
-            0% {
-                opacity: 0.3;
-                transform: scale(1);
-            }
-            100% {
-                opacity: 0.8;
-                transform: scale(1.6);
-            }
-        }
-        .cinema-bottom .emoji-big {
-            position: absolute;
-            font-size: 10rem;
-            opacity: 0.04;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .cinema-bottom .emoji-big:nth-child(1) {
-            top: -40px;
-            right: -20px;
-            transform: rotate(10deg);
-        }
-        .cinema-bottom .emoji-big:nth-child(2) {
-            bottom: -50px;
-            left: -30px;
-            transform: rotate(-12deg);
-            font-size: 12rem;
-        }
-        .cinema-bottom * {
-            position: relative;
-            z-index: 1;
-        }
-        .cinema-bottom h2 {
-            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-            font-weight: 900;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, #ff2d00, #ff0066, #ff2d00);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientMove 4s ease-in-out infinite;
-            filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.15));
-        }
-        .cinema-bottom p {
-            font-size: 0.95rem;
-            opacity: 0.7;
-            color: #e0c0c0;
-            letter-spacing: 1px;
-            max-width: 500px;
-        }
-        .cinema-bottom .zone-btn {
-            background: rgba(255, 0, 0, 0.10);
-            padding: 0.8rem 2.8rem;
+            color: #000;
+            padding: 0.8rem 3rem;
             border-radius: 50px;
-            border: 1px solid rgba(255, 0, 0, 0.20);
-            color: #ff4d4d;
+            font-size: 1.2rem;
             font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 1.5px;
-            transition: 0.4s;
-            backdrop-filter: blur(8px);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .cinema-bottom:hover .zone-btn {
-            background: #ff2d00;
-            color: #fff;
-            border-color: #ff2d00;
-            box-shadow: 0 0 40px rgba(255, 0, 0, 0.25);
-            transform: scale(1.05);
+            letter-spacing: 1px;
         }
 
-        /* ── RESPONSIVE ── */
+        /* --- bottom spacing helper --- */
+        .bottom-spacer {
+            height: 1rem;
+        }
+
         @media (max-width: 768px) {
             .game-grid {
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -659,85 +463,59 @@
                 padding: 0.8rem 1rem 1rem;
             }
             .game-card h3 {
-                font-size: 0.8rem;
+                font-size: 0.9rem;
             }
             .game-card .play-icon {
-                font-size: 0.55rem;
-                padding: 0.25rem 1rem;
+                font-size: 0.6rem;
+                padding: 0.3rem 1rem;
             }
             .category-btn {
                 padding: 0.4rem 1rem;
-                font-size: 0.6rem;
+                font-size: 0.7rem;
             }
-            .jokes-modern,
-            .cinema-bottom,
+            .zone-banner {
+                padding: 2rem 1rem;
+                margin: 1.5rem auto;
+            }
             .ext-games-banner {
-                padding: 2rem 1.2rem;
-                margin: 1.5rem 0.8rem;
-                border-radius: 28px;
+                padding: 2rem 1rem;
+                margin-bottom: 3rem;
             }
-            .jokes-modern .zone-btn,
-            .cinema-bottom .zone-btn {
-                padding: 0.6rem 1.8rem;
-                font-size: 0.75rem;
-            }
-            .controls {
+            .zone-cinema {
                 margin-top: 2rem;
             }
         }
-        @media (max-width: 480px) {
-            .game-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.8rem;
-                padding: 0 0.5rem 3rem;
-            }
-            .game-card .img-wrap {
-                height: 110px;
-            }
-            .game-card .info {
-                padding: 0.6rem 0.8rem 0.8rem;
-            }
-            .game-card h3 {
-                font-size: 0.7rem;
-            }
-            .game-card .cat-tag {
-                font-size: 0.5rem;
-            }
-            .game-card .play-icon {
-                font-size: 0.5rem;
-                padding: 0.2rem 0.8rem;
-            }
-            .game-card .badge,
-            .game-card .phone-badge {
-                font-size: 0.5rem;
-                padding: 0.15rem 0.6rem;
-            }
+        .img-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 4rem;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #16162a, #222244);
         }
     </style>
 </head>
 <body>
 
-    <!-- ─── LOADER ─── -->
-    <div class="loader" id="loader">
-        <div class="loader-spinner"></div>
-    </div>
+    <div class="loader" id="loader"><div class="loader-spinner"></div></div>
 
-    <!-- ─── SECTION 1: HERO ─── -->
+    <!-- SECTION 1: ENTERTAINMENT HERO -->
     <header class="header">
         <h1>🎬 ENTERTAINMENT</h1>
         <p>GAMES · CINEMA · JOKES</p>
     </header>
 
-    <!-- ─── SECTION 2: JOKES ZONE (MODERN GLASS) ─── -->
-    <a href="https://jokes.abdullahbinfahad.info" class="jokes-modern" target="_blank">
-        <span class="emoji-float">😂</span>
-        <span class="emoji-float">🤣</span>
+    <!-- SECTION 2: JOKES ZONE (stays at top) -->
+    <a href="https://jokes.abdullahbinfahad.info" class="zone-banner zone-jokes" target="_blank">
         <h2>😂 JOKES CLUB</h2>
-        <p>Thousands of hilarious jokes &amp; puns — updated daily!</p>
+        <p>Read Thousands of hilarious jokes & puns!</p>
         <div class="zone-btn"><i class="fas fa-laugh-beam"></i> Laugh Out Loud</div>
     </a>
 
-    <!-- ─── SECTION 3: GAME ARCADE ─── -->
+    <!-- SECTION 3: GAME ARCADE -->
     <div class="controls">
         <div class="search-wrap">
             <i class="fas fa-search"></i>
@@ -758,30 +536,28 @@
 
     <div class="game-grid" id="gameGrid"></div>
 
-    <!-- ─── SECTION 4: 1000+ GAMES ─── -->
+    <!-- SECTION 4: 1000+ MORE GAMES BANNER -->
     <a href="https://1000games.io/" class="ext-games-banner" target="_blank">
         <h2>🎲 1000+ MORE GAMES</h2>
-        <p>Thousands of additional online games across all genres!</p>
+        <p>Enjoy thousands of additional online games across all genres!</p>
         <div class="play-icon">PLAY NOW <i class="fas fa-arrow-right"></i></div>
     </a>
 
-    <!-- ─── SECTION 5: CINEMA ZONE (BOTTOM) ─── -->
-    <a href="https://moviebox.ph/" class="cinema-bottom" target="_blank">
-        <span class="cinema-glow"></span>
-        <span class="emoji-big">🎬</span>
-        <span class="emoji-big">🎥</span>
+    <!-- SECTION 5: IMAX CINEMA ZONE — NOW AT THE BOTTOM -->
+    <a href="https://moviebox.ph/" class="zone-banner zone-cinema" target="_blank">
         <h2>🎥 IMAX CINEMA</h2>
-        <p>Hollywood blockbuster vibe — free, with premium visual quality.</p>
+        <p>Hollywood blockbuster vibe complete free with premium visual quality.</p>
         <div class="zone-btn"><i class="fas fa-film"></i> Watch Now</div>
     </a>
 
-    <!-- ─── SCRIPT ─── -->
+    <div class="bottom-spacer"></div>
+
     <script>
         window.addEventListener('load', () => {
             setTimeout(() => document.getElementById('loader').classList.add('hidden'), 300);
         });
 
-        // ─── GAME DATA ───
+        // --- GAME DATA WITH DIRECT WEB IMAGES ---
         const gamesData = [
             { name: "Laser Archery Challenge", folder: "Archery-Game", cat: "Action",
                 img: "https://static.vecteezy.com/system/resources/thumbnails/002/538/807/small/happy-character-playing-archery-game-vector.jpg" },
@@ -802,7 +578,8 @@
                 img: "https://www.bestgames.com/cdn-cgi/image/quality=78,format=auto/thumb/Chain-Disk-2048.jpg", phone: true },
 
             { name: "Neon Snake Xtreme", folder: "Snake-Game", cat: "Arcade",
-                img: "https://www.shutterstock.com/image-vector/nokias-classic-snake-mobile-game-260nw-2391933343.jpg", phone: true },
+                img: "https://www.shutterstock.com/image-vector/nokias-classic-snake-mobile-game-260nw-2391933343.jpg",
+                phone: true },
             { name: "Laser Breakout", folder: "Breakout-Game", cat: "Arcade", badge: "HOT",
                 img: "https://www.coolmathgames.com/sites/default/files/2022-11/Arcade%20Games%20Atari%20Breakout%20Gameplay.gif" },
             { name: "Flappy Bird Reloaded", folder: "Flappy-Bird-Game", cat: "Arcade",
@@ -871,7 +648,7 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML =
-                    `<div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--text-secondary);font-size:1.1rem;opacity:0.5;"><i class="fas fa-ghost" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>No games found...</div>`;
+                    `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary); font-size: 1.2rem;"><i class="fas fa-ghost" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>No games found...</div>`;
                 return;
             }
 
@@ -880,18 +657,18 @@
                 card.href = `${game.folder}/`;
                 card.className = 'game-card';
                 card.innerHTML = `
-                    <div class="img-wrap">
-                        <img src="${game.img}" alt="${game.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
-                        <div class="img-placeholder" style="display:none;">🎮</div>
-                        ${game.badge ? `<span class="badge">${game.badge}</span>` : ''}
-                        ${game.phone ? `<span class="phone-badge">📱 Phone Playable</span>` : ''}
-                    </div>
-                    <div class="info">
-                        <h3>${game.name}</h3>
-                        <span class="cat-tag"><i class="fas fa-tag"></i> ${game.cat}</span>
-                        <span class="play-icon">PLAY <i class="fas fa-arrow-right"></i></span>
-                    </div>
-                `;
+                            <div class="img-wrap">
+                                <img src="${game.img}" alt="${game.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                <div class="img-placeholder" style="display:none;">🎮</div>
+                                ${game.badge ? `<span class="badge">${game.badge}</span>` : ''}
+                                ${game.phone ? `<span class="phone-badge">📱 Phone Playable</span>` : ''}
+                            </div>
+                            <div class="info">
+                                <h3>${game.name}</h3>
+                                <span class="cat-tag"><i class="fas fa-tag"></i> ${game.cat}</span>
+                                <span class="play-icon">PLAY <i class="fas fa-arrow-right"></i></span>
+                            </div>
+                        `;
                 grid.appendChild(card);
             });
         }
