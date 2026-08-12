@@ -1,26 +1,14 @@
-/* styles.css */
-
-/* Hard reset – no margins, no padding, no overflow */
-*,
-*::before,
-*::after {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html {
+html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden;               /* NO SCROLL */
-    background: #0a0a14;
-}
-
-body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;               /* NO SCROLL */
-    position: fixed;                /* Lock body to viewport */
+    overflow: hidden;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -32,10 +20,9 @@ body {
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;      /* Prevent swipe gestures */
+    overscroll-behavior: none;
 }
 
-/* Canvas stretches EXACTLY to the viewport */
 canvas {
     display: block;
     position: fixed;
@@ -47,12 +34,9 @@ canvas {
     outline: none;
     cursor: pointer;
     image-rendering: auto;
-    /* No object-fit – canvas fills every pixel */
-    margin: 0;
-    padding: 0;
 }
 
-/* ── HUD & Overlays ── */
+/* HUD */
 .hud-top {
     position: fixed;
     top: max(6px, env(safe-area-inset-top, 6px));
@@ -98,6 +82,7 @@ canvas {
     text-shadow: 0 0 12px rgba(57,255,20,0.7);
 }
 
+/* Combo display */
 .combo-display {
     position: fixed;
     top: 45%;
@@ -136,6 +121,7 @@ canvas {
     100% { transform: translateY(-50%) scale(1) rotate(0); opacity:1; }
 }
 
+/* Level message */
 .level-message {
     position: fixed;
     top: 35%;
@@ -160,6 +146,7 @@ canvas {
     transform: translate(-50%, -50%) scale(1);
 }
 
+/* Streak */
 .streak-indicator {
     position: fixed;
     bottom: max(80px, calc(env(safe-area-inset-bottom, 20px) + 60px));
@@ -187,70 +174,6 @@ canvas {
     50% { box-shadow: 0 0 25px rgba(255,215,0,0.7); }
 }
 
-/* Balloon – strictly within viewport, no overflow */
-.balloon {
-    position: fixed;
-    z-index: 5;
-    pointer-events: none;
-    top: 12%;
-    left: 5%;
-    animation: floatBalloon 12s ease-in-out infinite;
-    max-width: 100vw;
-    max-height: 100vh;
-}
-.balloon-string {
-    width: 2px;
-    height: 35px;
-    background: rgba(255,255,255,0.35);
-    margin: 0 auto;
-    border-radius: 1px;
-}
-.balloon-body {
-    width: 80px;
-    height: 95px;
-    background: radial-gradient(ellipse at 35% 30%, #ff7b9c, #e8355c 55%, #b81c3d);
-    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 6px 22px rgba(232,53,92,0.45);
-    animation: wobble 3s ease-in-out infinite;
-    position: relative;
-}
-.balloon-body::after {
-    content: '';
-    position: absolute;
-    top: 14%;
-    left: 20%;
-    width: 15px;
-    height: 12px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 50%;
-    transform: rotate(-20deg);
-}
-.balloon-body span {
-    font-family: 'Caveat Brush', cursive;
-    font-size: 10px;
-    color: #fff;
-    text-align: center;
-    line-height: 1.2;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    z-index: 1;
-}
-@keyframes floatBalloon {
-    0%,100% { transform: translateY(0) translateX(0); }
-    25% { transform: translateY(-25px) translateX(15px); }
-    50% { transform: translateY(-10px) translateX(-10px); }
-    75% { transform: translateY(-35px) translateX(8px); }
-}
-@keyframes wobble {
-    0%,100% { transform: rotate(-2deg); }
-    50% { transform: rotate(2deg); }
-}
-
 @media (max-width: 480px) {
-    .balloon-body { width: 60px; height: 72px; }
-    .balloon-string { height: 25px; }
-    .balloon-body span { font-size: 8px; }
     .hud-item { padding: 2px 8px; }
 }
