@@ -34,6 +34,7 @@
             box-shadow:0 0 30px rgba(100,100,255,0.3); background: transparent;
         }
 
+        /* Full‑screen blur overlay for pause (behind resume button) */
         .pause-blur {
             position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
@@ -41,6 +42,7 @@
             z-index:12; display:none; pointer-events:none;
         }
 
+        /* Big centered action button (start/resume) – on top of blur */
         .big-action-btn {
             position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
             padding:16px 32px; font-size:clamp(18px,4vw,28px); font-weight:700; letter-spacing:2px;
@@ -51,6 +53,7 @@
         }
         .big-action-btn:active { transform:translate(-50%,-50%) scale(0.95); }
 
+        /* Desktop side panel */
         .info-panel {
             display:flex; flex-direction:column; gap:clamp(8px,1.5vw,16px);
             background:#111122; border-radius:12px; padding:clamp(10px,2vw,20px);
@@ -72,6 +75,7 @@
         }
         .info-panel .btn-pause { background:var(--neon-cyan); box-shadow:0 0 15px rgba(0,229,255,0.4); }
 
+        /* Mobile only overlays */
         .mobile-overlay {
             display:none; position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;
         }
@@ -110,6 +114,7 @@
         .soft-btn::after { content:'↓'; font-size:24px; }
         .hard-btn::after { content:'🏃‍♂️'; font-size:22px; }
 
+        /* Overlay messages */
         .special-overlay {
             position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); z-index:40; pointer-events:none;
             background:linear-gradient(135deg, rgba(255,45,120,0.95), rgba(255,107,53,0.95));
@@ -214,7 +219,7 @@
             function sfxLevelUp() { playBeep(800,0.1,'triangle',0.12); setTimeout(()=>playBeep(1000,0.1,'triangle',0.12),100); }
             function sfxGameOver() { playBeep(200,0.3,'sawtooth',0.2); playBeep(150,0.4,'sawtooth',0.18); }
 
-            // ===================== CANVAS SETUP =====================
+            // ===================== CANVAS & RESPONSIVE =====================
             const gameCanvas = document.getElementById('gameCanvas');
             const gameCtx = gameCanvas.getContext('2d');
             const nextCanvas = document.getElementById('nextCanvas');
@@ -223,22 +228,17 @@
             const nextCtxMobile = nextCanvasMobile.getContext('2d');
 
             const COLS = 10, ROWS = 20;
-            let CELL_SIZE, boardWidth, boardHeight;
+            let cellWidth, cellHeight;        // used on mobile (rectangular cells)
+            let CELL_SIZE, boardWidth, boardHeight; // used on desktop (square cells)
             let boardOffsetX = 0, boardOffsetY = 0;
             let isMobile = window.innerWidth < 769;
             let DPR = window.devicePixelRatio || 1;
 
             function getViewportSize() {
                 if (window.visualViewport && isMobile) {
-                    return {
-                        width: window.visualViewport.width,
-                        height: window.visualViewport.height
-                    };
+                    return { width: window.visualViewport.width, height: window.visualViewport.height };
                 }
-                return {
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                };
+                return { width: window.innerWidth, height: window.innerHeight };
             }
 
             function calcCellSize() {
@@ -256,12 +256,10 @@
                     gameCtx.setTransform(1, 0, 0, 1, 0, 0);
                     gameCtx.scale(DPR, DPR);
 
-                    const cellFromWidth = canvasWidth / COLS;
-                    const cellFromHeight = canvasHeight / ROWS;
-                    CELL_SIZE = Math.min(cellFromWidth, cellFromHeight);
-                    boardWidth = CELL_SIZE * COLS;
-                    boardHeight = CELL_SIZE * ROWS;
-                    boardOffsetX = (canvasWidth - boardWidth) / 2;
+                    // Fill board completely to screen edges – no gaps
+                    cellWidth = canvasWidth / COLS;
+                    cellHeight = canvasHeight / ROWS;
+                    boardOffsetX = 0;
                     boardOffsetY = 0;
                 } else {
                     const canvasWidth = window.innerWidth * 0.55;
@@ -286,10 +284,7 @@
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
             window.addEventListener('orientationchange', () => setTimeout(calcCellSize, 200));
             if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', () => {
-                    calcCellSize();
-                    drawBoard();
-                });
+                window.visualViewport.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
             }
 
             // ===================== GAME STATE =====================
@@ -353,7 +348,11 @@
                 let cleared=0;
                 for (let r=ROWS-1;r>=0;r--) {
                     if (board[r].every(cell=>cell!==null)) {
-                        for (let c=0;c<COLS;c++) spawnParticles(c*CELL_SIZE+CELL_SIZE/2, r*CELL_SIZE+CELL_SIZE/2, board[r][c]);
+                        for (let c=0;c<COLS;c++) {
+                            const px = isMobile ? (c + 0.5) * cellWidth : (c + 0.5) * CELL_SIZE;
+                            const py = isMobile ? (r + 0.5) * cellHeight : (r + 0.5) * CELL_SIZE;
+                            spawnParticles(px, py, board[r][c]);
+                        }
                         board.splice(r,1);
                         board.unshift(Array(COLS).fill(null));
                         cleared++; r++;
@@ -534,109 +533,183 @@
             }
 
             // ===================== DRAWING =====================
-            function drawCell(ctx,col,row,color) {
-                const x=col*CELL_SIZE, y=row*CELL_SIZE, s=CELL_SIZE;
-                const grad=ctx.createLinearGradient(x,y,x+s,y+s);
-                grad.addColorStop(0,color); grad.addColorStop(1,'rgba(0,0,0,0.3)');
-                ctx.fillStyle=grad; ctx.fillRect(x+1,y+1,s-2,s-2);
-                ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(x+1,y+1,s-2,(s-2)*0.35);
-                ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(x+1,y+1,(s-2)*0.35,s-2);
-                ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,s-2,s-2);
+            function drawCell(ctx, col, row, color, w, h) {
+                const x = col * w, y = row * h;
+                const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+                grad.addColorStop(0, color);
+                grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(x + 1, y + 1, w - 2, (h - 2) * 0.35);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(x + 1, y + 1, (w - 2) * 0.35, h - 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
             }
+
             function drawBoard() {
                 const canvasW = gameCanvas.width / DPR;
                 const canvasH = gameCanvas.height / DPR;
-                gameCtx.clearRect(0,0,canvasW,canvasH);
+                gameCtx.clearRect(0, 0, canvasW, canvasH);
 
                 if (isMobile) {
+                    // Full screen fill
                     gameCtx.fillStyle = '#0d0d20';
-                    gameCtx.fillRect(0,0,canvasW,canvasH);
-                    gameCtx.strokeStyle='rgba(255,255,255,0.04)';
-                    gameCtx.lineWidth=0.5;
-                    for (let c=0; c<=COLS; c++) {
+                    gameCtx.fillRect(0, 0, canvasW, canvasH);
+                    gameCtx.strokeStyle = 'rgba(255,255,255,0.04)';
+                    gameCtx.lineWidth = 0.5;
+                    for (let c = 0; c <= COLS; c++) {
                         gameCtx.beginPath();
-                        gameCtx.moveTo(c * CELL_SIZE, 0);
-                        gameCtx.lineTo(c * CELL_SIZE, canvasH);
+                        gameCtx.moveTo(c * cellWidth, 0);
+                        gameCtx.lineTo(c * cellWidth, canvasH);
                         gameCtx.stroke();
                     }
-                    for (let r=0; r<=ROWS; r++) {
+                    for (let r = 0; r <= ROWS; r++) {
                         gameCtx.beginPath();
-                        gameCtx.moveTo(0, r * CELL_SIZE);
-                        gameCtx.lineTo(canvasW, r * CELL_SIZE);
+                        gameCtx.moveTo(0, r * cellHeight);
+                        gameCtx.lineTo(canvasW, r * cellHeight);
                         gameCtx.stroke();
                     }
+
+                    // Draw placed blocks
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
+                            if (board[r][c] !== null) {
+                                drawCell(gameCtx, c, r, board[r][c], cellWidth, cellHeight);
+                            }
+                        }
+                    }
+
+                    // Current piece & ghost
+                    if (currentPiece && gameRunning && !gameOver) {
+                        let ghostRow = currentPiece.row;
+                        while (isValidPosition(currentPiece.cells, ghostRow + 1, currentPiece.col)) ghostRow++;
+                        if (ghostRow !== currentPiece.row) {
+                            for (const [dr, dc] of currentPiece.cells) {
+                                const r = ghostRow + dr, c = currentPiece.col + dc;
+                                if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                    gameCtx.fillStyle = 'rgba(255,255,255,0.1)';
+                                    gameCtx.fillRect(c * cellWidth + 1, r * cellHeight + 1, cellWidth - 2, cellHeight - 2);
+                                    gameCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+                                    gameCtx.strokeRect(c * cellWidth + 1, r * cellHeight + 1, cellWidth - 2, cellHeight - 2);
+                                }
+                            }
+                        }
+                        for (const [dr, dc] of currentPiece.cells) {
+                            const r = currentPiece.row + dr, c = currentPiece.col + dc;
+                            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                drawCell(gameCtx, c, r, currentPiece.color, cellWidth, cellHeight);
+                            }
+                        }
+                    }
+
+                    // Particles
+                    particles.forEach(p => {
+                        const alpha = p.life / p.maxLife;
+                        gameCtx.fillStyle = p.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                        if (p.color.startsWith('#')) {
+                            const rr = parseInt(p.color.slice(1, 3), 16),
+                                gg = parseInt(p.color.slice(3, 5), 16),
+                                bb = parseInt(p.color.slice(5, 7), 16);
+                            gameCtx.fillStyle = `rgba(${rr},${gg},${bb},${alpha})`;
+                        }
+                        gameCtx.beginPath();
+                        gameCtx.arc(p.x, p.y, p.r * (0.5 + alpha * 0.5), 0, Math.PI * 2);
+                        gameCtx.fill();
+                    });
+
                 } else {
+                    // Desktop: centered board with square cells
                     gameCtx.fillStyle = '#0a0a14';
-                    gameCtx.fillRect(0,0,canvasW,canvasH);
+                    gameCtx.fillRect(0, 0, canvasW, canvasH);
                     gameCtx.fillStyle = '#0d0d20';
                     gameCtx.fillRect(boardOffsetX, boardOffsetY, boardWidth, boardHeight);
-                    gameCtx.strokeStyle='rgba(255,255,255,0.06)';
-                    gameCtx.lineWidth=1;
-                    for (let c=0; c<=COLS; c++) {
+                    gameCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+                    gameCtx.lineWidth = 1;
+                    for (let c = 0; c <= COLS; c++) {
                         gameCtx.beginPath();
                         gameCtx.moveTo(boardOffsetX + c * CELL_SIZE, boardOffsetY);
                         gameCtx.lineTo(boardOffsetX + c * CELL_SIZE, boardOffsetY + boardHeight);
                         gameCtx.stroke();
                     }
-                    for (let r=0; r<=ROWS; r++) {
+                    for (let r = 0; r <= ROWS; r++) {
                         gameCtx.beginPath();
                         gameCtx.moveTo(boardOffsetX, boardOffsetY + r * CELL_SIZE);
                         gameCtx.lineTo(boardOffsetX + boardWidth, boardOffsetY + r * CELL_SIZE);
                         gameCtx.stroke();
                     }
-                }
 
-                gameCtx.save();
-                gameCtx.translate(boardOffsetX, boardOffsetY);
-                for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (board[r][c]!==null) drawCell(gameCtx,c,r,board[r][c]);
-                if (currentPiece && gameRunning && !gameOver) {
-                    let ghostRow=currentPiece.row;
-                    while (isValidPosition(currentPiece.cells, ghostRow+1, currentPiece.col)) ghostRow++;
-                    if (ghostRow!==currentPiece.row) {
-                        for (const [dr,dc] of currentPiece.cells) {
-                            const r=ghostRow+dr, c=currentPiece.col+dc;
-                            if (r>=0&&r<ROWS&&c>=0&&c<COLS) {
-                                gameCtx.fillStyle='rgba(255,255,255,0.1)';
-                                gameCtx.fillRect(c*CELL_SIZE+1,r*CELL_SIZE+1,CELL_SIZE-2,CELL_SIZE-2);
-                                gameCtx.strokeStyle='rgba(255,255,255,0.3)'; gameCtx.strokeRect(c*CELL_SIZE+1,r*CELL_SIZE+1,CELL_SIZE-2,CELL_SIZE-2);
+                    gameCtx.save();
+                    gameCtx.translate(boardOffsetX, boardOffsetY);
+                    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (board[r][c] !== null) drawCell(gameCtx, c, r, board[r][c], CELL_SIZE, CELL_SIZE);
+                    if (currentPiece && gameRunning && !gameOver) {
+                        let ghostRow = currentPiece.row;
+                        while (isValidPosition(currentPiece.cells, ghostRow + 1, currentPiece.col)) ghostRow++;
+                        if (ghostRow !== currentPiece.row) {
+                            for (const [dr, dc] of currentPiece.cells) {
+                                const r = ghostRow + dr, c = currentPiece.col + dc;
+                                if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                    gameCtx.fillStyle = 'rgba(255,255,255,0.1)';
+                                    gameCtx.fillRect(c * CELL_SIZE + 1, r * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                                    gameCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+                                    gameCtx.strokeRect(c * CELL_SIZE + 1, r * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                                }
+                            }
+                        }
+                        for (const [dr, dc] of currentPiece.cells) {
+                            const r = currentPiece.row + dr, c = currentPiece.col + dc;
+                            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                drawCell(gameCtx, c, r, currentPiece.color, CELL_SIZE, CELL_SIZE);
                             }
                         }
                     }
-                    for (const [dr,dc] of currentPiece.cells) {
-                        const r=currentPiece.row+dr, c=currentPiece.col+dc;
-                        if (r>=0&&r<ROWS&&c>=0&&c<COLS) drawCell(gameCtx,c,r,currentPiece.color);
-                    }
+                    particles.forEach(p => {
+                        const alpha = p.life / p.maxLife;
+                        gameCtx.fillStyle = p.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                        if (p.color.startsWith('#')) {
+                            const rr = parseInt(p.color.slice(1, 3), 16),
+                                gg = parseInt(p.color.slice(3, 5), 16),
+                                bb = parseInt(p.color.slice(5, 7), 16);
+                            gameCtx.fillStyle = `rgba(${rr},${gg},${bb},${alpha})`;
+                        }
+                        gameCtx.beginPath();
+                        gameCtx.arc(p.x, p.y, p.r * (0.5 + alpha * 0.5), 0, Math.PI * 2);
+                        gameCtx.fill();
+                    });
+                    gameCtx.restore();
                 }
-                particles.forEach(p=>{
-                    const alpha = p.life/p.maxLife;
-                    gameCtx.fillStyle = p.color.replace(')',`, ${alpha})`).replace('rgb','rgba');
-                    if (p.color.startsWith('#')) {
-                        const rr=parseInt(p.color.slice(1,3),16), gg=parseInt(p.color.slice(3,5),16), bb=parseInt(p.color.slice(5,7),16);
-                        gameCtx.fillStyle=`rgba(${rr},${gg},${bb},${alpha})`;
-                    }
-                    gameCtx.beginPath();
-                    gameCtx.arc(p.x, p.y, p.r*(0.5+alpha*0.5),0,Math.PI*2);
-                    gameCtx.fill();
-                });
-                gameCtx.restore();
             }
+
             function drawNextPiece(ctx, canvasW, canvasH) {
-                ctx.clearRect(0,0,canvasW,canvasH);
+                ctx.clearRect(0, 0, canvasW, canvasH);
                 if (!nextPiece) return;
-                const ns=Math.min(18, Math.floor(canvasW/6));
-                const minR=Math.min(...nextPiece.cells.map(c=>c[0])), minC=Math.min(...nextPiece.cells.map(c=>c[1]));
-                const maxR=Math.max(...nextPiece.cells.map(c=>c[0])), maxC=Math.max(...nextPiece.cells.map(c=>c[1]));
-                const pw=(maxC-minC+1)*ns, ph=(maxR-minR+1)*ns;
-                const ox=(canvasW-pw)/2, oy=(canvasH-ph)/2;
-                for (const [dr,dc] of nextPiece.cells) {
-                    const x=ox+(dc-minC)*ns, y=oy+(dr-minR)*ns;
-                    const grad=ctx.createLinearGradient(x,y,x+ns,y+ns);
-                    grad.addColorStop(0,nextPiece.color); grad.addColorStop(1,'rgba(0,0,0,0.3)');
-                    ctx.fillStyle=grad; ctx.fillRect(x+1,y+1,ns-2,ns-2);
-                    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(x+1,y+1,ns-2,(ns-2)*0.3);
-                    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,ns-2,ns-2);
+                const ns = Math.min(18, Math.floor(canvasW / 6));
+                const minR = Math.min(...nextPiece.cells.map(c => c[0])),
+                    minC = Math.min(...nextPiece.cells.map(c => c[1]));
+                const maxR = Math.max(...nextPiece.cells.map(c => c[0])),
+                    maxC = Math.max(...nextPiece.cells.map(c => c[1]));
+                const pw = (maxC - minC + 1) * ns,
+                    ph = (maxR - minR + 1) * ns;
+                const ox = (canvasW - pw) / 2,
+                    oy = (canvasH - ph) / 2;
+                for (const [dr, dc] of nextPiece.cells) {
+                    const x = ox + (dc - minC) * ns,
+                        y = oy + (dr - minR) * ns;
+                    const grad = ctx.createLinearGradient(x, y, x + ns, y + ns);
+                    grad.addColorStop(0, nextPiece.color);
+                    grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(x + 1, y + 1, ns - 2, ns - 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.fillRect(x + 1, y + 1, ns - 2, (ns - 2) * 0.3);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x + 1, y + 1, ns - 2, ns - 2);
                 }
             }
+
             function drawAllNext() {
                 drawNextPiece(nextCtx, nextCanvas.width, nextCanvas.height);
                 drawNextPiece(nextCtxMobile, nextCanvasMobile.width, nextCanvasMobile.height);
@@ -644,33 +717,41 @@
 
             // ===================== GAME LOOP =====================
             function gameLoop(timestamp) {
-                animationId=requestAnimationFrame(gameLoop);
+                animationId = requestAnimationFrame(gameLoop);
                 if (gameRunning && !gamePaused && !gameOver) {
                     if (timestamp - lastDropTime > dropInterval) {
-                        if (!movePiece(1,0)) { lockPiece(); } else { lastDropTime=timestamp; }
+                        if (!movePiece(1, 0)) { lockPiece(); } else { lastDropTime = timestamp; }
                     }
                     updateParticles();
                 }
-                if (specialMessageTimer>0) { specialMessageTimer--; if (specialMessageTimer<=0) document.getElementById('specialMessage').classList.remove('show'); }
-                drawBoard(); drawAllNext();
+                if (specialMessageTimer > 0) {
+                    specialMessageTimer--;
+                    if (specialMessageTimer <= 0) document.getElementById('specialMessage').classList.remove('show');
+                }
+                drawBoard();
+                drawAllNext();
             }
 
             // ===================== CONTROLS =====================
-            document.addEventListener('keydown', (e)=>{
-                if (e.code==='Space'||e.code==='ArrowUp') { e.preventDefault(); rotateCurrentPiece(); }
-                else if (e.code==='ArrowDown') { e.preventDefault(); if (movePiece(1,0)) sfxMove(); }
-                else if (e.code==='ArrowLeft') { e.preventDefault(); if (movePiece(0,-1)) sfxMove(); }
-                else if (e.code==='ArrowRight') { e.preventDefault(); if (movePiece(0,1)) sfxMove(); }
-                else if (e.code==='KeyD'||e.code==='KeyS') { e.preventDefault(); hardDrop(); }
-                else if (e.code==='Escape'||e.code==='KeyP') { e.preventDefault(); togglePause(); }
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault();
+                    rotateCurrentPiece(); } else if (e.code === 'ArrowDown') { e.preventDefault(); if (movePiece(1, 0)) sfxMove(); } else if (
+                    e.code === 'ArrowLeft') { e.preventDefault(); if (movePiece(0, -1)) sfxMove(); } else if (e.code === 'ArrowRight') { e
+                    .preventDefault(); if (movePiece(0, 1)) sfxMove(); } else if (e.code === 'KeyD' || e.code === 'KeyS') { e
+                    .preventDefault();
+                    hardDrop(); } else if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault();
+                    togglePause(); }
             });
 
             // Mobile touch
-            let touchStartX=0, touchStartY=0, touchStartTime=0, touchMoved = false;
-            gameCanvas.addEventListener('touchstart', (e)=>{
+            let touchStartX = 0,
+                touchStartY = 0,
+                touchStartTime = 0,
+                touchMoved = false;
+            gameCanvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 initAudio();
-                if (e.touches.length===1) {
+                if (e.touches.length === 1) {
                     touchStartX = e.touches[0].clientX;
                     touchStartY = e.touches[0].clientY;
                     touchStartTime = Date.now();
@@ -685,50 +766,64 @@
                         else startLongPress('middle');
                     }
                 }
-            }, {passive:false});
+            }, { passive: false });
 
-            gameCanvas.addEventListener('touchmove', (e)=>{
+            gameCanvas.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 if (!gameRunning || gamePaused || gameOver) return;
-                const x = e.touches[0].clientX, y = e.touches[0].clientY;
+                const x = e.touches[0].clientX,
+                    y = e.touches[0].clientY;
                 if (Math.abs(x - touchStartX) > 10 || Math.abs(y - touchStartY) > 10) {
                     touchMoved = true;
                     stopLongPress();
                 }
-            }, {passive:false});
+            }, { passive: false });
 
-            gameCanvas.addEventListener('touchend', (e)=>{
+            gameCanvas.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 stopLongPress();
                 if (!gameRunning || gamePaused || gameOver) return;
                 const touch = e.changedTouches[0];
-                const dx = touch.clientX - touchStartX, dy = touch.clientY - touchStartY;
+                const dx = touch.clientX - touchStartX,
+                    dy = touch.clientY - touchStartY;
                 const dt = Date.now() - touchStartTime;
-                const absDx = Math.abs(dx), absDy = Math.abs(dy);
+                const absDx = Math.abs(dx),
+                    absDy = Math.abs(dy);
                 if (dt < 300 && absDx < 20 && absDy < 20 && !touchMoved) {
                     const canvasRect = gameCanvas.getBoundingClientRect();
                     const tapX = touch.clientX - canvasRect.left;
                     const leftZoneEnd = 0.25 * canvasRect.width;
                     const rightZoneStart = 0.75 * canvasRect.width;
-                    if (tapX < leftZoneEnd) { if (movePiece(0, -1)) sfxMove(); }
-                    else if (tapX > rightZoneStart) { if (movePiece(0, 1)) sfxMove(); }
-                    else { rotateCurrentPiece(); }
+                    if (tapX < leftZoneEnd) { if (movePiece(0, -1)) sfxMove(); } else if (tapX > rightZoneStart) { if (movePiece(0, 1))
+                            sfxMove(); } else { rotateCurrentPiece(); }
                     return;
                 }
-                if (absDy > absDx && absDy > 30) { if (dy > 0) hardDrop(); else rotateCurrentPiece(); }
-                else if (absDx > absDy && absDx > 30) { if (dx < 0 && movePiece(0, -1)) sfxMove(); else if (dx > 0 && movePiece(0, 1)) sfxMove(); }
-            }, {passive:false});
+                if (absDy > absDx && absDy > 30) { if (dy > 0) hardDrop(); else rotateCurrentPiece(); } else if (absDx > absDy && absDx >
+                    30) { if (dx < 0 && movePiece(0, -1)) sfxMove(); else if (dx > 0 && movePiece(0, 1)) sfxMove(); }
+            }, { passive: false });
 
             // Action buttons
-            document.getElementById('softDropBtn').addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); initAudio(); softDrop(); });
-            document.getElementById('hardDropBtn').addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); initAudio(); hardDrop(); });
-            document.getElementById('softDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); softDrop(); });
-            document.getElementById('hardDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); hardDrop(); });
+            document.getElementById('softDropBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                e.stopPropagation();
+                initAudio();
+                softDrop(); });
+            document.getElementById('hardDropBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                e.stopPropagation();
+                initAudio();
+                hardDrop(); });
+            document.getElementById('softDropBtn').addEventListener('click', (e) => { e.stopPropagation();
+                initAudio();
+                softDrop(); });
+            document.getElementById('hardDropBtn').addEventListener('click', (e) => { e.stopPropagation();
+                initAudio();
+                hardDrop(); });
 
             const bigActionBtn = document.getElementById('bigActionBtn');
-            bigActionBtn.addEventListener('click', (e)=>{ e.stopPropagation(); if (!gameRunning) startGame(); else if (gamePaused) togglePause(); });
+            bigActionBtn.addEventListener('click', (e) => { e.stopPropagation(); if (!gameRunning) startGame(); else if (gamePaused)
+                    togglePause(); });
 
-            document.getElementById('mobilePauseBtn').addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
+            document.getElementById('mobilePauseBtn').addEventListener('click', (e) => { e.stopPropagation();
+            togglePause(); });
             document.getElementById('btnStart').addEventListener('click', startGame);
             document.getElementById('btnPause').addEventListener('click', togglePause);
             document.getElementById('btnRestart').addEventListener('click', startGame);
@@ -736,20 +831,23 @@
             function initUI() {
                 calcCellSize();
                 initBoard();
-                nextPiece=randomPiece();
+                nextPiece = randomPiece();
                 updateAllDisplays();
-                drawBoard(); drawAllNext();
-                document.getElementById('btnStart').style.display='block';
-                document.getElementById('btnPause').style.display='none';
-                document.getElementById('bigActionBtn').style.display='block';
-                document.getElementById('bigActionBtn').textContent='Start';
-                document.getElementById('mobilePauseBtn').style.display='none';
-                document.getElementById('pauseBlur').style.display='none';
-                gameRunning=false; gameOver=false; gamePaused=false;
+                drawBoard();
+                drawAllNext();
+                document.getElementById('btnStart').style.display = 'block';
+                document.getElementById('btnPause').style.display = 'none';
+                document.getElementById('bigActionBtn').style.display = 'block';
+                document.getElementById('bigActionBtn').textContent = 'Start';
+                document.getElementById('mobilePauseBtn').style.display = 'none';
+                document.getElementById('pauseBlur').style.display = 'none';
+                gameRunning = false;
+                gameOver = false;
+                gamePaused = false;
                 stopLongPress();
             }
             initUI();
-            animationId=requestAnimationFrame(gameLoop);
+            animationId = requestAnimationFrame(gameLoop);
         })();
     </script>
 </body>
