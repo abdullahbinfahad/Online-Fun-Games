@@ -5,16 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f1a2e">
-    <title>Flappy Bird • Modern Version</title>
+    <meta name="theme-color" content="#0a0a14">
+    <title>Flappy Bird • ABDULLAH BIN FAHAD Edition</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600;700;800&family=Caveat+Brush&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-wrapper">
+    <div class="game-container" id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        <div class="score-display" id="scoreDisplay">0</div>
-        <div class="best-display" id="bestDisplay">🏆 0</div>
+
+        <!-- HUD -->
+        <div class="hud-top" id="hudTop">
+            <div class="hud-score-wrap">
+                <span class="hud-label">SCORE</span>
+                <span class="hud-score" id="hudScore">0</span>
+            </div>
+            <div class="hud-level-wrap">
+                <span class="hud-label">LEVEL</span>
+                <span class="hud-level" id="hudLevel">1</span>
+            </div>
+            <div class="hud-best-wrap">
+                <span class="hud-label">BEST</span>
+                <span class="hud-best" id="hudBest">0</span>
+            </div>
+        </div>
+
+        <!-- Combo display -->
+        <div class="combo-display" id="comboDisplay"></div>
+
+        <!-- Level up message -->
+        <div class="level-up-message" id="levelUpMessage"></div>
+
+        <!-- Streak indicator -->
+        <div class="streak-indicator" id="streakIndicator"></div>
+
+        <!-- ABDULLAH BIN FAHAD balloon -->
+        <div class="balloon-container" id="balloonContainer">
+            <div class="balloon">
+                <div class="balloon-string"></div>
+                <div class="balloon-body">
+                    <span class="balloon-text">ABDULLAH <br> BIN<br> FAHAD</span>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
