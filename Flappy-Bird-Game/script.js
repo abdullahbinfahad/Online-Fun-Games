@@ -12,15 +12,14 @@
     const streakIndicator = document.getElementById('streakIndicator');
     const balloon = document.getElementById('balloon');
 
-    // ── Responsive full‑viewport canvas (no gaps) ──
+    // ── Full viewport canvas – no gaps ──
     const MAX_DPR = 2;
     let W, H, DPR;
 
     function resize() {
         DPR = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-        // Use clientWidth/clientHeight for accurate CSS pixels (no gaps)
-        W = document.documentElement.clientWidth;
-        H = document.documentElement.clientHeight;
+        W = window.innerWidth;
+        H = window.innerHeight;
         canvas.width = Math.floor(W * DPR);
         canvas.height = Math.floor(H * DPR);
         canvas.style.width = W + 'px';
@@ -48,7 +47,7 @@
         positionBalloon();
     }, 300));
 
-    // ── Dynamic game dimensions ──
+    // ── Game dimensions (proportional to screen) ──
     let BIRD_R, PIPE_W, PIPE_GAP, GROUND_H, PIPE_CAP_H,
         PIPE_SPEED, GRAVITY, JUMP_VEL, MAX_FALL, SPAWN_INTERVAL;
 
@@ -66,7 +65,7 @@
     }
     updateDimensions();
 
-    // ── Game state ──
+    // ── State ──
     const STATE = { PRE: 'prestart', RUN: 'running', OVER: 'over' };
     let gameMode = STATE.PRE, score = 0, currentLevel = 1, bestScore = 0;
     let pipes = [], particles = [], clouds = [], stars = [];
