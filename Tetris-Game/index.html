@@ -14,6 +14,7 @@
             --neon-cyan: #00e5ff;
             --neon-green: #39ff14;
             --text: #e0e0e0;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         html, body {
@@ -34,12 +35,12 @@
             box-shadow:0 0 30px rgba(100,100,255,0.3); background: transparent;
         }
 
-        /* Full‑screen blur overlay for pause (behind resume button) */
-        .pause-blur {
+        /* Full‑screen blur overlay for pause & start */
+        .blur-overlay {
             position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
             -webkit-backdrop-filter:blur(8px);
-            z-index:12; display:none; pointer-events:none;
+            z-index:15; display:none; pointer-events:auto;
         }
 
         /* Big centered action button (start/resume) – on top of blur */
@@ -114,13 +115,15 @@
         .soft-btn::after { content:'↓'; font-size:24px; }
         .hard-btn::after { content:'🏃‍♂️'; font-size:22px; }
 
-        /* Overlay messages */
+        /* Special ABDULLAH BIN FAHAD message – larger & clearer */
         .special-overlay {
             position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); z-index:40; pointer-events:none;
-            background:linear-gradient(135deg, rgba(255,45,120,0.95), rgba(255,107,53,0.95));
-            color:#fff; padding:14px 26px; border-radius:30px; font-weight:700; font-size:clamp(14px,2.5vw,20px);
-            text-align:center; box-shadow:0 8px 30px rgba(255,45,120,0.6); border:2px solid rgba(255,255,255,0.3);
-            transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275); white-space:nowrap; letter-spacing:0.5px; max-width:90vw;
+            background:linear-gradient(135deg, rgba(255,45,120,0.98), rgba(255,107,53,0.98));
+            color:#fff; padding:18px 32px; border-radius:36px; font-weight:700;
+            font-size:clamp(18px, 4vw, 28px); text-align:center; box-shadow:0 8px 30px rgba(255,45,120,0.8);
+            border:3px solid rgba(255,255,255,0.4); transition:transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+            white-space:normal; letter-spacing:0.8px; max-width:90vw; line-height:1.4;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
         .special-overlay.show { transform:translate(-50%,-50%) scale(1); animation:bounceIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
         @keyframes bounceIn {
@@ -129,6 +132,7 @@
             70% { transform:translate(-50%,-50%) scale(0.9); }
             100% { transform:translate(-50%,-50%) scale(1); }
         }
+
         .gameover-overlay {
             position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:45; pointer-events:auto;
             background:rgba(0,0,0,0.85); border:2px solid rgba(255,255,255,0.3); border-radius:16px;
@@ -160,7 +164,7 @@
     <div class="game-wrapper">
         <div class="board-container" id="boardContainer">
             <canvas id="gameCanvas"></canvas>
-            <div class="pause-blur" id="pauseBlur"></div>
+            <div class="blur-overlay" id="blurOverlay"></div>
             <div class="mobile-overlay" id="mobileOverlay">
                 <div class="mobile-stats" id="mobileStatsBar">
                     <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value" id="scoreMobile">0</span></div>
@@ -228,11 +232,12 @@
             const nextCtxMobile = nextCanvasMobile.getContext('2d');
 
             const COLS = 10, ROWS = 20;
-            let cellWidth, cellHeight;        // used on mobile (rectangular cells)
-            let CELL_SIZE, boardWidth, boardHeight; // used on desktop (square cells)
+            let cellWidth, cellHeight;
+            let CELL_SIZE, boardWidth, boardHeight;
             let boardOffsetX = 0, boardOffsetY = 0;
             let isMobile = window.innerWidth < 769;
             let DPR = window.devicePixelRatio || 1;
+            let safeBottom = 0;
 
             function getViewportSize() {
                 if (window.visualViewport && isMobile) {
@@ -241,9 +246,15 @@
                 return { width: window.innerWidth, height: window.innerHeight };
             }
 
+            function getSafeBottom() {
+                const style = getComputedStyle(document.documentElement);
+                return parseFloat(style.getPropertyValue('--safe-bottom')) || 0;
+            }
+
             function calcCellSize() {
                 isMobile = window.innerWidth < 769;
                 DPR = window.devicePixelRatio || 1;
+                safeBottom = getSafeBottom();
                 const viewport = getViewportSize();
 
                 if (isMobile) {
@@ -256,9 +267,10 @@
                     gameCtx.setTransform(1, 0, 0, 1, 0, 0);
                     gameCtx.scale(DPR, DPR);
 
-                    // Fill board completely to screen edges – no gaps
+                    // Fill board to screen edges: top=0, bottom = canvasHeight - safeBottom
+                    const playableHeight = canvasHeight - safeBottom;
                     cellWidth = canvasWidth / COLS;
-                    cellHeight = canvasHeight / ROWS;
+                    cellHeight = playableHeight / ROWS;
                     boardOffsetX = 0;
                     boardOffsetY = 0;
                 } else {
@@ -280,6 +292,7 @@
                     boardOffsetY = (canvasHeight - boardHeight) / 2;
                 }
             }
+
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
             window.addEventListener('orientationchange', () => setTimeout(calcCellSize, 200));
@@ -457,7 +470,7 @@
                 document.getElementById('btnPause').style.display='none';
                 document.getElementById('bigActionBtn').style.display='none';
                 document.getElementById('mobilePauseBtn').style.display='none';
-                document.getElementById('pauseBlur').style.display='none';
+                document.getElementById('blurOverlay').style.display='none';
             }
             function startGame() {
                 initAudio(); initBoard();
@@ -471,7 +484,7 @@
                 document.getElementById('bigActionBtn').style.display='none';
                 document.getElementById('mobilePauseBtn').style.display='inline-block';
                 document.getElementById('mobilePauseBtn').textContent = 'Pause';
-                document.getElementById('pauseBlur').style.display='none';
+                document.getElementById('blurOverlay').style.display='none';
                 document.getElementById('specialMessage').classList.remove('show');
                 specialMessageTimer=0;
                 nextPiece=randomPiece(); spawnPiece();
@@ -481,7 +494,7 @@
             function togglePause() {
                 if (!gameRunning||gameOver) return;
                 gamePaused = !gamePaused;
-                const blur = document.getElementById('pauseBlur');
+                const blur = document.getElementById('blurOverlay');
                 const bigBtn = document.getElementById('bigActionBtn');
                 if (gamePaused) {
                     document.getElementById('btnPause').textContent='Resume';
@@ -555,7 +568,7 @@
                 gameCtx.clearRect(0, 0, canvasW, canvasH);
 
                 if (isMobile) {
-                    // Full screen fill
+                    // Full screen fill with background and grid
                     gameCtx.fillStyle = '#0d0d20';
                     gameCtx.fillRect(0, 0, canvasW, canvasH);
                     gameCtx.strokeStyle = 'rgba(255,255,255,0.04)';
@@ -819,6 +832,7 @@
                 hardDrop(); });
 
             const bigActionBtn = document.getElementById('bigActionBtn');
+            const blurOverlay = document.getElementById('blurOverlay');
             bigActionBtn.addEventListener('click', (e) => { e.stopPropagation(); if (!gameRunning) startGame(); else if (gamePaused)
                     togglePause(); });
 
@@ -839,8 +853,8 @@
                 document.getElementById('btnPause').style.display = 'none';
                 document.getElementById('bigActionBtn').style.display = 'block';
                 document.getElementById('bigActionBtn').textContent = 'Start';
+                document.getElementById('blurOverlay').style.display = 'block'; // show blur behind start
                 document.getElementById('mobilePauseBtn').style.display = 'none';
-                document.getElementById('pauseBlur').style.display = 'none';
                 gameRunning = false;
                 gameOver = false;
                 gamePaused = false;
