@@ -82,7 +82,7 @@
         .mobile-stats {
             position:absolute; top:6px; left:6px; display:flex; gap:12px; align-items:center;
             background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.15); border-radius:10px;
-            padding:4px 10px; pointer-events:none; color:#fff;
+            padding:4px 10px; pointer-events:auto; color:#fff;
         }
         .mobile-stats .stat-item { display:flex; flex-direction:column; align-items:center; min-width:36px; }
         .mobile-stats .stat-label { font-size:7px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.5); font-weight:600; }
@@ -93,11 +93,12 @@
         }
         .mobile-next canvas { display:block; }
 
-        /* Pause button (small, top bar) */
-        .mobile-pause-btn {
-            position:absolute; top:6px; right:80px; padding:4px 10px; font-size:10px; border:none; border-radius:6px;
-            font-weight:700; cursor:pointer; background:var(--neon-cyan); color:#000; box-shadow:0 0 8px rgba(0,229,255,0.4);
-            text-transform:uppercase; pointer-events:auto; display:none;
+        /* Pause button inside the scoreboard card */
+        .pause-btn-inline {
+            background:var(--neon-cyan); color:#000; border:none; border-radius:6px;
+            font-weight:700; font-size:10px; padding:4px 8px; cursor:pointer;
+            box-shadow:0 0 8px rgba(0,229,255,0.4); text-transform:uppercase;
+            pointer-events:auto; display:none;
         }
 
         /* Soft & hard drop buttons under stats / next */
@@ -145,8 +146,6 @@
             .board-container { width:100vw; height:100vh; position:fixed; top:0; left:0; }
             canvas#gameCanvas { border:none; border-radius:0; }
             .mobile-overlay { display:block; }
-            .mobile-pause-btn { display:none; } /* shown by JS */
-            .pause-blur { border-radius:0; }
         }
     </style>
 </head>
@@ -165,13 +164,13 @@
             <canvas id="gameCanvas"></canvas>
             <div class="pause-blur" id="pauseBlur"></div>
             <div class="mobile-overlay" id="mobileOverlay">
-                <div class="mobile-stats">
+                <div class="mobile-stats" id="mobileStatsBar">
                     <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value" id="scoreMobile">0</span></div>
                     <div class="stat-item"><span class="stat-label">Level</span><span class="stat-value" id="levelMobile">1</span></div>
                     <div class="stat-item"><span class="stat-label">Lines</span><span class="stat-value" id="linesMobile">0</span></div>
+                    <button class="pause-btn-inline" id="mobilePauseBtn">Pause</button>
                 </div>
                 <div class="mobile-next"><canvas id="nextCanvasMobile" width="60" height="40"></canvas></div>
-                <button class="mobile-pause-btn" id="mobilePauseBtn">Pause</button>
                 <div class="action-btns-row">
                     <div class="action-btn soft-btn" id="softDropBtn" title="Soft drop"></div>
                     <div class="action-btn hard-btn" id="hardDropBtn" title="Hard drop"></div>
@@ -223,7 +222,7 @@
             function sfxLevelUp() { playBeep(800,0.1,'triangle',0.12); setTimeout(()=>playBeep(1000,0.1,'triangle',0.12),100); }
             function sfxGameOver() { playBeep(200,0.3,'sawtooth',0.2); playBeep(150,0.4,'sawtooth',0.18); }
 
-            // ===================== CANVAS & RESPONSIVE (true full‑screen on mobile) =====================
+            // ===================== CANVAS & RESPONSIVE (full‑screen mobile, normal desktop) =====================
             const gameCanvas = document.getElementById('gameCanvas');
             const gameCtx = gameCanvas.getContext('2d');
             const nextCanvas = document.getElementById('nextCanvas');
@@ -246,16 +245,16 @@
                     gameCanvas.style.width = canvasWidth + 'px';
                     gameCanvas.style.height = canvasHeight + 'px';
 
-                    // Fit board vertically and horizontally without gaps by using full canvas
+                    // Calculate cell size to fit entire board within screen
                     const cellFromWidth = canvasWidth / COLS;
                     const cellFromHeight = canvasHeight / ROWS;
                     CELL_SIZE = Math.min(cellFromWidth, cellFromHeight);
                     boardWidth = CELL_SIZE * COLS;
                     boardHeight = CELL_SIZE * ROWS;
-                    boardOffsetX = (canvasWidth - boardWidth) / 2;   // center horizontally if needed
+                    boardOffsetX = (canvasWidth - boardWidth) / 2;   // center horizontally (if extra space)
                     boardOffsetY = 0;                                 // start at top
                 } else {
-                    // Desktop layout (restored)
+                    // Desktop layout
                     const canvasWidth = window.innerWidth * 0.55;
                     const canvasHeight = window.innerHeight * 0.85;
                     gameCanvas.width = canvasWidth;
@@ -454,7 +453,7 @@
                 document.getElementById('btnStart').style.display='none';
                 document.getElementById('btnPause').style.display='block';
                 document.getElementById('bigActionBtn').style.display='none';
-                document.getElementById('mobilePauseBtn').style.display='block';
+                document.getElementById('mobilePauseBtn').style.display='inline-block';
                 document.getElementById('mobilePauseBtn').textContent = 'Pause';
                 document.getElementById('pauseBlur').style.display='none';
                 document.getElementById('specialMessage').classList.remove('show');
@@ -519,7 +518,7 @@
                 }, 300);
             }
 
-            // ===================== DRAWING (full‑screen grid on mobile) =====================
+            // ===================== DRAWING (full‑screen background and grid on mobile) =====================
             function drawCell(ctx,col,row,color) {
                 const x=col*CELL_SIZE, y=row*CELL_SIZE, s=CELL_SIZE;
                 const grad=ctx.createLinearGradient(x,y,x+s,y+s);
@@ -533,19 +532,18 @@
                 const canvasW = gameCanvas.width;
                 const canvasH = gameCanvas.height;
                 gameCtx.clearRect(0,0,canvasW,canvasH);
-                // Draw background and grid over entire canvas (fills any gaps)
+                // Fill entire canvas with background color (so no white gaps)
                 gameCtx.fillStyle = '#0d0d20';
                 gameCtx.fillRect(0,0,canvasW,canvasH);
+                // Draw grid over entire canvas (makes it look full‑screen)
                 gameCtx.strokeStyle='rgba(255,255,255,0.04)';
                 gameCtx.lineWidth=0.5;
-                // Draw vertical lines for all columns across full width
                 for (let c=0; c<=COLS; c++) {
                     gameCtx.beginPath();
                     gameCtx.moveTo(c * CELL_SIZE, 0);
                     gameCtx.lineTo(c * CELL_SIZE, canvasH);
                     gameCtx.stroke();
                 }
-                // Draw horizontal lines for all rows across full height
                 for (let r=0; r<=ROWS; r++) {
                     gameCtx.beginPath();
                     gameCtx.moveTo(0, r * CELL_SIZE);
@@ -553,7 +551,7 @@
                     gameCtx.stroke();
                 }
 
-                // Translate to the actual board area (might be centered horizontally)
+                // Translate to the actual board area (may be centered horizontally)
                 gameCtx.save();
                 gameCtx.translate(boardOffsetX, boardOffsetY);
                 // Draw placed blocks
@@ -718,7 +716,7 @@
                 else if (gamePaused) togglePause();
             });
 
-            // Pause button
+            // Pause button (inside scoreboard card on mobile)
             document.getElementById('mobilePauseBtn').addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
 
             // Desktop buttons
