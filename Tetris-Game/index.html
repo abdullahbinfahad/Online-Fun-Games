@@ -33,6 +33,16 @@
             display:block; border:2px solid rgba(255,255,255,0.2); border-radius:8px;
             box-shadow:0 0 30px rgba(100,100,255,0.3); background:#0d0d20;
         }
+
+        /* Blur overlay for pause */
+        .pause-blur {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            z-index:12; display:none; pointer-events:none;
+            border-radius: 8px;
+        }
+
         /* Desktop side panel (unchanged) */
         .info-panel {
             display:flex; flex-direction:column; gap:clamp(8px,1.5vw,16px);
@@ -59,7 +69,6 @@
         .mobile-overlay {
             display:none; position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;
         }
-        /* Stats and next piece (top bar) */
         .mobile-stats {
             position:absolute; top:6px; left:6px; display:flex; gap:12px; align-items:center;
             background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.15); border-radius:10px;
@@ -78,9 +87,10 @@
         .mobile-pause-btn {
             position:absolute; top:6px; right:80px; padding:4px 10px; font-size:10px; border:none; border-radius:6px;
             font-weight:700; cursor:pointer; background:var(--neon-cyan); color:#000; box-shadow:0 0 8px rgba(0,229,255,0.4);
-            text-transform:uppercase; pointer-events:auto; display:none; /* hidden by default, shown when game running */
+            text-transform:uppercase; pointer-events:auto; display:none;
         }
-        /* Big centered start/resume button */
+
+        /* Big centered action button */
         .big-action-btn {
             position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
             padding:16px 32px; font-size:clamp(18px,4vw,28px); font-weight:700; letter-spacing:2px;
@@ -90,19 +100,21 @@
             transition:all 0.2s; display:none;
         }
         .big-action-btn:active { transform:translate(-50%,-50%) scale(0.95); }
-        /* Top corner icons (soft drop & hard drop) */
-        .corner-btn {
-            position:absolute; width:44px; height:44px; border-radius:50%;
-            background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.35);
-            color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center;
-            cursor:pointer; pointer-events:auto; z-index:15; -webkit-tap-highlight-color:transparent;
-            user-select:none; transition:0.15s;
+
+        /* Soft & hard drop buttons under stats / next */
+        .action-btns-row {
+            position:absolute; top:60px; left:0; right:0; display:flex; justify-content:space-between;
+            padding:0 10px; pointer-events:none;
         }
-        .corner-btn:active { background:rgba(255,255,255,0.35); transform:scale(0.9); border-color:var(--neon-cyan); box-shadow:0 0 15px rgba(0,229,255,0.5); }
-        .soft-drop-btn { top:6px; left:120px; }  /* near stats */
-        .hard-drop-btn { top:6px; right:130px; }  /* near next piece */
-        .soft-drop-btn::after { content:'↓'; }
-        .hard-drop-btn::after { content:'⇓'; }
+        .action-btn {
+            width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.15);
+            border:2px solid rgba(255,255,255,0.35); color:#fff; font-size:20px;
+            display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto;
+            transition:all 0.15s; -webkit-tap-highlight-color:transparent; user-select:none;
+        }
+        .action-btn:active { background:rgba(255,255,255,0.35); transform:scale(0.9); border-color:var(--neon-cyan); box-shadow:0 0 15px rgba(0,229,255,0.5); }
+        .soft-btn::after { content:'↓'; font-size:24px; }
+        .hard-btn::after { content:'🔥↓'; font-size:20px; }
 
         /* Overlay messages */
         .special-overlay {
@@ -134,7 +146,8 @@
             .board-container { width:100vw; height:100vh; position:fixed; top:0; left:0; }
             canvas#gameCanvas { border:none; border-radius:0; width:100%; height:100%; }
             .mobile-overlay { display:block; }
-            .mobile-pause-btn { display:none; } /* will be shown by JS */
+            .mobile-pause-btn { display:none; } /* shown by JS */
+            .pause-blur { border-radius:0; }
         }
     </style>
 </head>
@@ -151,6 +164,7 @@
     <div class="game-wrapper">
         <div class="board-container" id="boardContainer">
             <canvas id="gameCanvas"></canvas>
+            <div class="pause-blur" id="pauseBlur"></div>
             <div class="mobile-overlay" id="mobileOverlay">
                 <div class="mobile-stats">
                     <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value" id="scoreMobile">0</span></div>
@@ -160,8 +174,11 @@
                 <div class="mobile-next"><canvas id="nextCanvasMobile" width="60" height="40"></canvas></div>
                 <button class="mobile-pause-btn" id="mobilePauseBtn">Pause</button>
                 <button class="big-action-btn" id="bigActionBtn">Start</button>
-                <div class="corner-btn soft-drop-btn" id="softDropBtn"></div>
-                <div class="corner-btn hard-drop-btn" id="hardDropBtn"></div>
+                <!-- New action buttons row under stats/next -->
+                <div class="action-btns-row">
+                    <div class="action-btn soft-btn" id="softDropBtn" title="Soft drop"></div>
+                    <div class="action-btn hard-btn" id="hardDropBtn" title="Hard drop"></div>
+                </div>
             </div>
         </div>
 
@@ -381,7 +398,6 @@
                     score+=10; updateAllDisplays(); checkScoreMilestone();
                 }
                 spawnPiece(); lastDropTime=performance.now();
-                // If long-press was active, we need to reset it after lock
                 stopLongPress();
             }
             function updateAllDisplays() {
@@ -421,6 +437,7 @@
                 document.getElementById('btnPause').style.display='none';
                 document.getElementById('bigActionBtn').style.display='none';
                 document.getElementById('mobilePauseBtn').style.display='none';
+                document.getElementById('pauseBlur').style.display='none';
             }
             function startGame() {
                 initAudio(); initBoard();
@@ -434,6 +451,7 @@
                 document.getElementById('bigActionBtn').style.display='none';
                 document.getElementById('mobilePauseBtn').style.display='block';
                 document.getElementById('mobilePauseBtn').textContent = 'Pause';
+                document.getElementById('pauseBlur').style.display='none';
                 document.getElementById('specialMessage').classList.remove('show');
                 specialMessageTimer=0;
                 nextPiece=randomPiece(); spawnPiece();
@@ -443,15 +461,19 @@
             function togglePause() {
                 if (!gameRunning||gameOver) return;
                 gamePaused = !gamePaused;
+                const blur = document.getElementById('pauseBlur');
+                const bigBtn = document.getElementById('bigActionBtn');
                 if (gamePaused) {
                     document.getElementById('btnPause').textContent='Resume';
                     document.getElementById('mobilePauseBtn').textContent='Resume';
-                    document.getElementById('bigActionBtn').style.display='block';
-                    document.getElementById('bigActionBtn').textContent='Resume';
+                    bigBtn.style.display='block';
+                    bigBtn.textContent='Resume';
+                    blur.style.display='block';
                 } else {
                     document.getElementById('btnPause').textContent='Pause';
                     document.getElementById('mobilePauseBtn').textContent='Pause';
-                    document.getElementById('bigActionBtn').style.display='none';
+                    bigBtn.style.display='none';
+                    blur.style.display='none';
                     lastDropTime = performance.now();
                 }
             }
@@ -466,8 +488,6 @@
                     if (!gameRunning || gamePaused || gameOver) return;
                     softDropInterval = setInterval(() => {
                         if (!softDrop()) {
-                            // piece can't move down anymore, stop soft drop and lock?
-                            // actually it will lock on next natural drop, but we can force immediate lock
                             lockPiece();
                             stopLongPress();
                         }
@@ -538,11 +558,7 @@
                     gameCtx.arc(p.x, p.y, p.r*(0.5+alpha*0.5),0,Math.PI*2);
                     gameCtx.fill();
                 });
-                if (gamePaused && !gameOver) {
-                    gameCtx.fillStyle='rgba(0,0,0,0.6)'; gameCtx.fillRect(0,0,boardWidth,boardHeight);
-                    gameCtx.fillStyle='#fff'; gameCtx.font=`bold ${CELL_SIZE*1.2}px 'Segoe UI'`; gameCtx.textAlign='center';
-                    gameCtx.fillText('PAUSED',boardWidth/2,boardHeight/2);
-                }
+                // Removed PAUSED text – blur overlay handles it
                 gameCtx.restore();
             }
             function drawNextPiece(ctx, canvasW, canvasH) {
@@ -581,7 +597,6 @@
             }
 
             // ===================== CONTROLS =====================
-            // Keyboard
             document.addEventListener('keydown', (e)=>{
                 if (e.code==='Space'||e.code==='ArrowUp') { e.preventDefault(); rotateCurrentPiece(); }
                 else if (e.code==='ArrowDown') { e.preventDefault(); if (movePiece(1,0)) sfxMove(); }
@@ -591,7 +606,7 @@
                 else if (e.code==='Escape'||e.code==='KeyP') { e.preventDefault(); togglePause(); }
             });
 
-            // Mobile touch handling – tap zones, swipe, long press
+            // Mobile touch handling
             let touchStartX=0, touchStartY=0, touchStartTime=0;
             let touchMoved = false;
 
@@ -603,7 +618,6 @@
                     touchStartY = e.touches[0].clientY;
                     touchStartTime = Date.now();
                     touchMoved = false;
-                    // Start long press detection if game is active and not paused
                     if (gameRunning && !gamePaused && !gameOver) {
                         startLongPress();
                     }
@@ -617,17 +631,14 @@
                 const y = e.touches[0].clientY;
                 if (Math.abs(x - touchStartX) > 10 || Math.abs(y - touchStartY) > 10) {
                     touchMoved = true;
-                    stopLongPress(); // cancel long press if swiping
+                    stopLongPress();
                 }
             }, {passive:false});
 
             gameCanvas.addEventListener('touchend', (e)=>{
                 e.preventDefault();
                 stopLongPress();
-                if (!gameRunning || gamePaused || gameOver) {
-                    // If game not running, touch ends but big button handles start via its own click.
-                    return;
-                }
+                if (!gameRunning || gamePaused || gameOver) return;
                 const touch = e.changedTouches[0];
                 const dx = touch.clientX - touchStartX;
                 const dy = touch.clientY - touchStartY;
@@ -635,7 +646,6 @@
                 const absDx = Math.abs(dx);
                 const absDy = Math.abs(dy);
 
-                // If it was a quick tap with minimal movement → tap zones
                 if (dt < 300 && absDx < 20 && absDy < 20 && !touchMoved) {
                     const canvasRect = gameCanvas.getBoundingClientRect();
                     const tapX = touch.clientX - canvasRect.left;
@@ -651,7 +661,6 @@
                     return;
                 }
 
-                // Otherwise, handle as swipe
                 if (absDy > absDx && absDy > 30) {
                     if (dy > 0) hardDrop();
                     else rotateCurrentPiece();
@@ -661,22 +670,22 @@
                 }
             }, {passive:false});
 
-            // Corner buttons for soft/hard drop
+            // Action buttons (soft/hard drop)
             document.getElementById('softDropBtn').addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); initAudio(); softDrop(); });
             document.getElementById('hardDropBtn').addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); initAudio(); hardDrop(); });
             document.getElementById('softDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); softDrop(); });
             document.getElementById('hardDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); hardDrop(); });
 
-            // Big centered action button (Start / Resume)
+            // Big centered button
             const bigActionBtn = document.getElementById('bigActionBtn');
             bigActionBtn.addEventListener('click', (e)=>{
                 e.stopPropagation();
                 if (!gameRunning) startGame();
                 else if (gamePaused) togglePause();
             });
-            // Pause button in top bar (mobile)
-            const mobilePauseBtn = document.getElementById('mobilePauseBtn');
-            mobilePauseBtn.addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
+
+            // Pause button
+            document.getElementById('mobilePauseBtn').addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
 
             // Desktop buttons
             document.getElementById('btnStart').addEventListener('click', startGame);
@@ -695,6 +704,7 @@
                 document.getElementById('bigActionBtn').style.display='block';
                 document.getElementById('bigActionBtn').textContent='Start';
                 document.getElementById('mobilePauseBtn').style.display='none';
+                document.getElementById('pauseBlur').style.display='none';
                 gameRunning=false; gameOver=false; gamePaused=false;
                 stopLongPress();
             }
