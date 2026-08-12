@@ -223,7 +223,7 @@
             function sfxLevelUp() { playBeep(800,0.1,'triangle',0.12); setTimeout(()=>playBeep(1000,0.1,'triangle',0.12),100); }
             function sfxGameOver() { playBeep(200,0.3,'sawtooth',0.2); playBeep(150,0.4,'sawtooth',0.18); }
 
-            // ===================== CANVAS & RESPONSIVE (full‑screen mobile, normal desktop) =====================
+            // ===================== CANVAS & RESPONSIVE (true full‑screen on mobile) =====================
             const gameCanvas = document.getElementById('gameCanvas');
             const gameCtx = gameCanvas.getContext('2d');
             const nextCanvas = document.getElementById('nextCanvas');
@@ -239,7 +239,6 @@
             function calcCellSize() {
                 isMobile = window.innerWidth < 769;
                 if (isMobile) {
-                    // Use clientWidth/Height to avoid address bar issues
                     const canvasWidth = document.documentElement.clientWidth;
                     const canvasHeight = document.documentElement.clientHeight;
                     gameCanvas.width = canvasWidth;
@@ -247,15 +246,14 @@
                     gameCanvas.style.width = canvasWidth + 'px';
                     gameCanvas.style.height = canvasHeight + 'px';
 
-                    const topOffset = 60; // leave space for HUD stats (they are overlaid)
-                    const maxCellFromWidth = canvasWidth / COLS;
-                    const maxCellFromHeight = (canvasHeight - topOffset) / ROWS;
-                    CELL_SIZE = Math.min(maxCellFromWidth, maxCellFromHeight);
+                    // Fit board vertically and horizontally without gaps by using full canvas
+                    const cellFromWidth = canvasWidth / COLS;
+                    const cellFromHeight = canvasHeight / ROWS;
+                    CELL_SIZE = Math.min(cellFromWidth, cellFromHeight);
                     boardWidth = CELL_SIZE * COLS;
                     boardHeight = CELL_SIZE * ROWS;
-                    boardOffsetX = (canvasWidth - boardWidth) / 2;
-                    // Center vertically in the area below topOffset
-                    boardOffsetY = topOffset + (canvasHeight - topOffset - boardHeight) / 2;
+                    boardOffsetX = (canvasWidth - boardWidth) / 2;   // center horizontally if needed
+                    boardOffsetY = 0;                                 // start at top
                 } else {
                     // Desktop layout (restored)
                     const canvasWidth = window.innerWidth * 0.55;
@@ -521,7 +519,7 @@
                 }, 300);
             }
 
-            // ===================== DRAWING =====================
+            // ===================== DRAWING (full‑screen grid on mobile) =====================
             function drawCell(ctx,col,row,color) {
                 const x=col*CELL_SIZE, y=row*CELL_SIZE, s=CELL_SIZE;
                 const grad=ctx.createLinearGradient(x,y,x+s,y+s);
@@ -535,21 +533,30 @@
                 const canvasW = gameCanvas.width;
                 const canvasH = gameCanvas.height;
                 gameCtx.clearRect(0,0,canvasW,canvasH);
-                gameCtx.save();
-                gameCtx.translate(boardOffsetX, boardOffsetY);
-                gameCtx.strokeStyle='rgba(255,255,255,0.04)'; gameCtx.lineWidth=0.5;
-                for (let r=0; r<=ROWS; r++) {
-                    gameCtx.beginPath();
-                    gameCtx.moveTo(0, r*CELL_SIZE);
-                    gameCtx.lineTo(boardWidth, r*CELL_SIZE);
-                    gameCtx.stroke();
-                }
+                // Draw background and grid over entire canvas (fills any gaps)
+                gameCtx.fillStyle = '#0d0d20';
+                gameCtx.fillRect(0,0,canvasW,canvasH);
+                gameCtx.strokeStyle='rgba(255,255,255,0.04)';
+                gameCtx.lineWidth=0.5;
+                // Draw vertical lines for all columns across full width
                 for (let c=0; c<=COLS; c++) {
                     gameCtx.beginPath();
-                    gameCtx.moveTo(c*CELL_SIZE, 0);
-                    gameCtx.lineTo(c*CELL_SIZE, boardHeight);
+                    gameCtx.moveTo(c * CELL_SIZE, 0);
+                    gameCtx.lineTo(c * CELL_SIZE, canvasH);
                     gameCtx.stroke();
                 }
+                // Draw horizontal lines for all rows across full height
+                for (let r=0; r<=ROWS; r++) {
+                    gameCtx.beginPath();
+                    gameCtx.moveTo(0, r * CELL_SIZE);
+                    gameCtx.lineTo(canvasW, r * CELL_SIZE);
+                    gameCtx.stroke();
+                }
+
+                // Translate to the actual board area (might be centered horizontally)
+                gameCtx.save();
+                gameCtx.translate(boardOffsetX, boardOffsetY);
+                // Draw placed blocks
                 for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (board[r][c]!==null) drawCell(gameCtx,c,r,board[r][c]);
                 if (currentPiece && gameRunning && !gameOver) {
                     let ghostRow=currentPiece.row;
