@@ -18,7 +18,6 @@
             --neon-green: #39ff14;
             --text: #e0e0e0;
         }
-
         * {
             margin: 0;
             padding: 0;
@@ -42,7 +41,6 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior: none;
         }
-
         .game-wrapper {
             display: flex;
             flex-direction: row;
@@ -53,66 +51,6 @@
             padding: clamp(8px, 2vw, 20px);
             gap: clamp(12px, 2vw, 30px);
         }
-
-        /* Top bar – only visible on mobile */
-        .info-top-bar {
-            display: none;
-            width: 100%;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 12px;
-            background: var(--panel-bg);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 10px;
-            color: var(--text);
-            font-size: clamp(10px, 2vw, 14px);
-            flex-shrink: 0;
-        }
-        .info-top-bar .top-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-        }
-        .info-top-bar .label {
-            font-size: 7px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-            font-weight: 600;
-        }
-        .info-top-bar .value {
-            font-family: 'Fredoka One', cursive;
-            font-size: clamp(12px, 2.5vw, 18px);
-            color: #fff;
-            text-shadow: 0 0 6px rgba(255,215,0,0.4);
-        }
-        .info-top-bar .next-piece {
-            background: rgba(0,0,0,0.3);
-            border-radius: 6px;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .info-top-bar .btn {
-            padding: 6px 10px;
-            font-size: 9px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 700;
-            letter-spacing: 1px;
-            background: var(--neon-green);
-            color: #000;
-            box-shadow: 0 0 8px rgba(57,255,20,0.4);
-        }
-        .info-top-bar .btn-pause {
-            background: var(--neon-cyan);
-            box-shadow: 0 0 8px rgba(0,229,255,0.4);
-        }
-
-        /* Board container */
         .board-container {
             position: relative;
             display: flex;
@@ -120,7 +58,6 @@
             justify-content: center;
             flex-shrink: 0;
         }
-
         canvas#gameCanvas {
             display: block;
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -128,7 +65,6 @@
             box-shadow: 0 0 30px rgba(100, 100, 255, 0.3), 0 0 60px rgba(100, 100, 255, 0.1);
             background: #0d0d20;
         }
-
         /* Desktop side panel */
         .info-panel {
             display: flex;
@@ -205,7 +141,83 @@
             background: var(--neon-cyan);
             box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
         }
-
+        /* Mobile overlays (hidden on desktop) */
+        .mobile-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .mobile-stats {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 4px 10px;
+            pointer-events: none;
+            color: #fff;
+        }
+        .mobile-stats .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 36px;
+        }
+        .mobile-stats .stat-label {
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+        }
+        .mobile-stats .stat-value {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(12px, 3vw, 18px);
+            text-shadow: 0 0 6px rgba(255,215,0,0.4);
+        }
+        .mobile-next {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 4px;
+            pointer-events: none;
+        }
+        .mobile-buttons {
+            position: absolute;
+            top: 6px;
+            right: 80px;
+            display: flex;
+            gap: 6px;
+            pointer-events: auto;
+        }
+        .mobile-buttons .btn {
+            padding: 4px 10px;
+            font-size: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 8px rgba(57,255,20,0.4);
+            text-transform: uppercase;
+        }
+        .mobile-buttons .btn-pause {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0,229,255,0.4);
+        }
         /* Overlay messages */
         .special-overlay {
             position: fixed;
@@ -238,8 +250,6 @@
             70% { transform: translate(-50%, -50%) scale(0.9); }
             100% { transform: translate(-50%, -50%) scale(1); }
         }
-
-        /* Game over overlay */
         .gameover-overlay {
             position: fixed;
             top: 50%;
@@ -276,66 +286,28 @@
             font-weight: 700;
             cursor: pointer;
         }
-
-        /* Mobile overlay controls (only on mobile) */
-        .mobile-overlay-controls {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .mobile-overlay-controls .ctrl-btn {
-            position: absolute;
-            width: clamp(40px, 10vw, 48px);
-            height: clamp(40px, 10vw, 48px);
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.35);
-            color: #fff;
-            font-size: clamp(16px, 3vw, 22px);
-            cursor: pointer;
-            touch-action: manipulation;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            pointer-events: auto;
-        }
-        .mobile-overlay-controls .ctrl-btn:active {
-            background: rgba(255, 255, 255, 0.35);
-            transform: scale(0.9);
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
-        }
-        /* Left column */
-        .mobile-overlay-controls .left-btn:nth-child(1) { top: 15%; left: 6px; }
-        .mobile-overlay-controls .left-btn:nth-child(2) { top: 50%; transform: translateY(-50%); left: 6px; }
-        .mobile-overlay-controls .left-btn:nth-child(3) { bottom: 15%; left: 6px; }
-        /* Right column */
-        .mobile-overlay-controls .right-btn:nth-child(4) { top: 15%; right: 6px; }
-        .mobile-overlay-controls .right-btn:nth-child(5) { top: 50%; transform: translateY(-50%); right: 6px; }
-        .mobile-overlay-controls .right-btn:nth-child(6) { bottom: 15%; right: 6px; }
-
         @media (max-width: 768px) {
             .game-wrapper {
-                flex-direction: column;
-                gap: 6px;
-                padding: 6px;
-                justify-content: flex-start;
+                padding: 0;
+                gap: 0;
             }
             .info-panel {
                 display: none;
             }
-            .info-top-bar {
-                display: flex;
+            .board-container {
+                width: 100vw;
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
             }
-            .mobile-overlay-controls {
+            canvas#gameCanvas {
+                border: none;
+                border-radius: 0;
+                width: 100%;
+                height: 100%;
+            }
+            .mobile-overlay {
                 display: block;
             }
         }
@@ -353,30 +325,24 @@
     </div>
 
     <div class="game-wrapper">
-        <!-- Mobile top bar (hidden on desktop) -->
-        <div class="info-top-bar" id="infoTopBar">
-            <div class="top-item"><span class="label">Score</span><span class="value" id="scoreDisplayMobile">0</span></div>
-            <div class="top-item"><span class="label">Level</span><span class="value" id="levelDisplayMobile">1</span></div>
-            <div class="top-item"><span class="label">Lines</span><span class="value" id="linesDisplayMobile">0</span></div>
-            <div class="next-piece"><canvas id="nextCanvasMobile" width="60" height="40"></canvas></div>
-            <button class="btn" id="btnStartMobile">Start</button>
-            <button class="btn btn-pause" id="btnPauseMobile" style="display:none;">Pause</button>
-        </div>
-
-        <!-- Board with overlay controls -->
         <div class="board-container" id="boardContainer">
             <canvas id="gameCanvas"></canvas>
-            <div class="mobile-overlay-controls" id="mobileOverlayControls">
-                <button class="ctrl-btn left-btn" id="ctrlLeft2">←</button>
-                <button class="ctrl-btn left-btn" id="ctrlDown2">↓</button>
-                <button class="ctrl-btn left-btn" id="ctrlRotate2">↻</button>
-                <button class="ctrl-btn right-btn" id="ctrlRight2">→</button>
-                <button class="ctrl-btn right-btn" id="ctrlUp2">↑</button>
-                <button class="ctrl-btn right-btn" id="ctrlDrop2">↓↓</button>
+            <div class="mobile-overlay" id="mobileOverlay">
+                <div class="mobile-stats">
+                    <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value" id="scoreMobile">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Level</span><span class="stat-value" id="levelMobile">1</span></div>
+                    <div class="stat-item"><span class="stat-label">Lines</span><span class="stat-value" id="linesMobile">0</span></div>
+                </div>
+                <div class="mobile-next">
+                    <canvas id="nextCanvasMobile" width="60" height="40"></canvas>
+                </div>
+                <div class="mobile-buttons">
+                    <button class="btn" id="btnStartMobile">Start</button>
+                    <button class="btn btn-pause" id="btnPauseMobile" style="display:none;">Pause</button>
+                </div>
             </div>
         </div>
 
-        <!-- Desktop side panel -->
         <div class="info-panel" id="infoPanel">
             <h2>TETRIS</h2>
             <div class="info-item"><span class="info-label">Score</span><span class="info-value" id="scoreDisplay">0</span></div>
@@ -395,7 +361,6 @@
             // ===================== AUDIO =====================
             let audioCtx;
             function initAudio() { if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)(); }
-
             function playBeep(freq, dur, type = 'square', vol = 0.08) {
                 if (!audioCtx) return;
                 try {
@@ -428,26 +393,39 @@
 
             const COLS = 10, ROWS = 20;
             let CELL_SIZE, boardWidth, boardHeight;
+            let boardOffsetX = 0, boardOffsetY = 0; // used for tap zone calculations
 
             function calcCellSize() {
                 const isMobile = window.innerWidth < 769;
-                let maxH, maxW;
                 if (isMobile) {
-                    maxH = window.innerHeight * 0.78;  // leave room for top bar
-                    maxW = window.innerWidth * 0.92;
+                    const maxW = window.innerWidth;
+                    const maxH = window.innerHeight;
+                    const fromH = Math.floor(maxH / ROWS);
+                    const fromW = Math.floor(maxW / COLS);
+                    CELL_SIZE = Math.min(fromH, fromW);
+                    boardWidth = CELL_SIZE * COLS;
+                    boardHeight = CELL_SIZE * ROWS;
+                    gameCanvas.width = maxW;
+                    gameCanvas.height = maxH;
+                    gameCanvas.style.width = maxW + 'px';
+                    gameCanvas.style.height = maxH + 'px';
+                    boardOffsetX = (maxW - boardWidth) / 2;
+                    boardOffsetY = (maxH - boardHeight) / 2;
                 } else {
-                    maxH = window.innerHeight * 0.85;
-                    maxW = window.innerWidth * 0.55;
+                    const maxH = window.innerHeight * 0.85;
+                    const maxW = window.innerWidth * 0.55;
+                    const fromH = Math.floor(maxH / ROWS);
+                    const fromW = Math.floor(maxW / COLS);
+                    CELL_SIZE = Math.max(20, Math.min(38, Math.min(fromH, fromW)));
+                    boardWidth = CELL_SIZE * COLS;
+                    boardHeight = CELL_SIZE * ROWS;
+                    gameCanvas.width = boardWidth;
+                    gameCanvas.height = boardHeight;
+                    gameCanvas.style.width = boardWidth + 'px';
+                    gameCanvas.style.height = boardHeight + 'px';
+                    boardOffsetX = 0;
+                    boardOffsetY = 0;
                 }
-                const fromH = Math.floor(maxH / ROWS);
-                const fromW = Math.floor(maxW / COLS);
-                CELL_SIZE = Math.max(20, Math.min(38, Math.min(fromH, fromW)));
-                boardWidth = CELL_SIZE * COLS;
-                boardHeight = CELL_SIZE * ROWS;
-                gameCanvas.width = boardWidth;
-                gameCanvas.height = boardHeight;
-                gameCanvas.style.width = boardWidth + 'px';
-                gameCanvas.style.height = boardHeight + 'px';
             }
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
@@ -581,9 +559,9 @@
                 document.getElementById('scoreDisplay').textContent=score;
                 document.getElementById('levelDisplay').textContent=level;
                 document.getElementById('linesDisplay').textContent=lines;
-                document.getElementById('scoreDisplayMobile').textContent=score;
-                document.getElementById('levelDisplayMobile').textContent=level;
-                document.getElementById('linesDisplayMobile').textContent=lines;
+                document.getElementById('scoreMobile').textContent=score;
+                document.getElementById('levelMobile').textContent=level;
+                document.getElementById('linesMobile').textContent=lines;
                 dropInterval = Math.max(50, 800 - (level-1)*70);
             }
             function showSpecialMessage(msg) {
@@ -651,17 +629,25 @@
                 ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,s-2,s-2);
             }
             function drawBoard() {
-                gameCtx.clearRect(0,0,boardWidth,boardHeight);
+                const canvasW = gameCanvas.width;
+                const canvasH = gameCanvas.height;
+                gameCtx.clearRect(0,0,canvasW,canvasH);
+                gameCtx.save();
+                gameCtx.translate(boardOffsetX, boardOffsetY);
                 gameCtx.strokeStyle='rgba(255,255,255,0.04)'; gameCtx.lineWidth=0.5;
-                for (let r=0;r<=ROWS;r++) { gameCtx.beginPath();
-                    gameCtx.moveTo(0,r*CELL_SIZE);
-                    gameCtx.lineTo(boardWidth,r*CELL_SIZE);
-                    gameCtx.stroke(); }
-                for (let c=0;c<=COLS;c++) { gameCtx.beginPath();
-                    gameCtx.moveTo(c*CELL_SIZE,0);
-                    gameCtx.lineTo(c*CELL_SIZE,boardHeight);
-                    gameCtx.stroke(); }
-                for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (board[r][c]!==null) drawCell(gameCtx,c,r,board[r][c]);
+                for (let r=0; r<=ROWS; r++) {
+                    gameCtx.beginPath();
+                    gameCtx.moveTo(0, r*CELL_SIZE);
+                    gameCtx.lineTo(boardWidth, r*CELL_SIZE);
+                    gameCtx.stroke();
+                }
+                for (let c=0; c<=COLS; c++) {
+                    gameCtx.beginPath();
+                    gameCtx.moveTo(c*CELL_SIZE, 0);
+                    gameCtx.lineTo(c*CELL_SIZE, boardHeight);
+                    gameCtx.stroke();
+                }
+                for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) if (board[r][c]!==null) drawCell(gameCtx,c,r,board[r][c]);
                 if (currentPiece && gameRunning && !gameOver) {
                     let ghostRow=currentPiece.row;
                     while (isValidPosition(currentPiece.cells, ghostRow+1, currentPiece.col)) ghostRow++;
@@ -688,7 +674,7 @@
                         gameCtx.fillStyle=`rgba(${rr},${gg},${bb},${alpha})`;
                     }
                     gameCtx.beginPath();
-                    gameCtx.arc(p.x,p.y,p.r*(0.5+alpha*0.5),0,Math.PI*2);
+                    gameCtx.arc(p.x, p.y, p.r*(0.5+alpha*0.5),0,Math.PI*2);
                     gameCtx.fill();
                 });
                 if (gamePaused && !gameOver) {
@@ -696,6 +682,7 @@
                     gameCtx.fillStyle='#fff'; gameCtx.font=`bold ${CELL_SIZE*1.2}px 'Segoe UI'`; gameCtx.textAlign='center';
                     gameCtx.fillText('PAUSED',boardWidth/2,boardHeight/2);
                 }
+                gameCtx.restore();
             }
             function drawNextPiece(ctx, canvasW, canvasH) {
                 ctx.clearRect(0,0,canvasW,canvasH);
@@ -746,47 +733,56 @@
                     togglePause(); }
             });
 
-            // Touch on canvas
+            // Touch on canvas – tap zones and swipe
             let touchStartX=0, touchStartY=0, touchStartTime=0;
             gameCanvas.addEventListener('touchstart', (e)=>{
                 e.preventDefault();
                 initAudio();
-                if (e.touches.length===1) { touchStartX=e.touches[0].clientX;
-                    touchStartY=e.touches[0].clientY;
-                    touchStartTime=Date.now(); }
+                if (e.touches.length===1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                }
             }, {passive:false});
+
             gameCanvas.addEventListener('touchend', (e)=>{
                 e.preventDefault();
                 if (!gameRunning||gamePaused||gameOver) return;
-                const dx=(e.changedTouches[0]?.clientX||touchStartX)-touchStartX;
-                const dy=(e.changedTouches[0]?.clientY||touchStartY)-touchStartY;
-                const dt=Date.now()-touchStartTime;
-                const absDx=Math.abs(dx), absDy=Math.abs(dy);
-                if (absDx<10&&absDy<10&&dt<300) rotateCurrentPiece();
-                else if (absDy>absDx&&absDy>30) { if (dy>0) hardDrop(); else rotateCurrentPiece(); }
-                else if (absDx>absDy&&absDx>30) { if (dx<0&&movePiece(0,-1)) sfxMove(); else if (dx>0&&movePiece(0,1)) sfxMove(); }
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+                const dt = Date.now() - touchStartTime;
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+
+                // If it's a quick tap with very little movement → use tap zones
+                if (dt < 300 && absDx < 20 && absDy < 20) {
+                    const canvasRect = gameCanvas.getBoundingClientRect();
+                    const tapX = touch.clientX - canvasRect.left;
+                    // Determine which region was tapped
+                    const leftFreeSpaceEnd = boardOffsetX;
+                    const rightFreeSpaceStart = boardOffsetX + boardWidth;
+                    if (tapX < leftFreeSpaceEnd) {
+                        if (movePiece(0, -1)) sfxMove();
+                    } else if (tapX > rightFreeSpaceStart) {
+                        if (movePiece(0, 1)) sfxMove();
+                    } else {
+                        rotateCurrentPiece();
+                    }
+                    return;
+                }
+
+                // Otherwise, handle as swipe
+                if (absDy > absDx && absDy > 30) {
+                    if (dy > 0) hardDrop();
+                    else rotateCurrentPiece();
+                } else if (absDx > absDy && absDx > 30) {
+                    if (dx < 0 && movePiece(0, -1)) sfxMove();
+                    else if (dx > 0 && movePiece(0, 1)) sfxMove();
+                }
             }, {passive:false});
 
-            // Overlay control buttons (mobile) – add event listeners
-            function bindMobileBtn(id, action) {
-                const btn = document.getElementById(id);
-                if (!btn) return;
-                btn.addEventListener('touchstart', (e)=>{ e.preventDefault();
-                    e.stopPropagation();
-                    initAudio();
-                    action(); });
-                btn.addEventListener('click', (e)=>{ e.stopPropagation();
-                    initAudio();
-                    action(); });
-            }
-            bindMobileBtn('ctrlLeft2', ()=>{ if (movePiece(0,-1)) sfxMove(); });
-            bindMobileBtn('ctrlDown2', ()=>{ if (movePiece(1,0)) sfxMove(); });
-            bindMobileBtn('ctrlRotate2', rotateCurrentPiece);
-            bindMobileBtn('ctrlRight2', ()=>{ if (movePiece(0,1)) sfxMove(); });
-            bindMobileBtn('ctrlUp2', rotateCurrentPiece);
-            bindMobileBtn('ctrlDrop2', hardDrop);
-
-            // Start / Pause / Restart (desktop + mobile)
+            // Start / Pause / Restart
             document.getElementById('btnStart').addEventListener('click', startGame);
             document.getElementById('btnPause').addEventListener('click', togglePause);
             document.getElementById('btnStartMobile').addEventListener('click', startGame);
