@@ -28,20 +28,31 @@
         }
         .board-container {
             position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0;
-            width:100%; height:100%; /* fill the space */
+            width:100%; height:100%;
         }
         canvas#gameCanvas {
             display:block; border:2px solid rgba(255,255,255,0.2); border-radius:8px;
             box-shadow:0 0 30px rgba(100,100,255,0.3); background:#0d0d20;
         }
 
-        /* Full‑screen blur overlay for pause */
+        /* Full‑screen blur overlay for pause (behind resume button) */
         .pause-blur {
             position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
             -webkit-backdrop-filter:blur(8px);
             z-index:12; display:none; pointer-events:none;
         }
+
+        /* Big centered action button (start/resume) – outside board, on top */
+        .big-action-btn {
+            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+            padding:16px 32px; font-size:clamp(18px,4vw,28px); font-weight:700; letter-spacing:2px;
+            border:none; border-radius:16px; cursor:pointer; background:var(--neon-green); color:#000;
+            box-shadow:0 0 25px rgba(57,255,20,0.6); text-transform:uppercase;
+            z-index:20; font-family:'Fredoka One',cursive;
+            transition:all 0.2s; display:none;
+        }
+        .big-action-btn:active { transform:translate(-50%,-50%) scale(0.95); }
 
         /* Desktop side panel (unchanged) */
         .info-panel {
@@ -90,17 +101,6 @@
             text-transform:uppercase; pointer-events:auto; display:none;
         }
 
-        /* Big centered action button (start/resume) */
-        .big-action-btn {
-            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-            padding:16px 32px; font-size:clamp(18px,4vw,28px); font-weight:700; letter-spacing:2px;
-            border:none; border-radius:16px; cursor:pointer; background:var(--neon-green); color:#000;
-            box-shadow:0 0 25px rgba(57,255,20,0.6); text-transform:uppercase;
-            pointer-events:auto; z-index:15; font-family:'Fredoka One',cursive;
-            transition:all 0.2s; display:none;
-        }
-        .big-action-btn:active { transform:translate(-50%,-50%) scale(0.95); }
-
         /* Soft & hard drop buttons under stats / next */
         .action-btns-row {
             position:absolute; top:60px; left:0; right:0; display:flex; justify-content:space-between;
@@ -114,7 +114,7 @@
         }
         .action-btn:active { background:rgba(255,255,255,0.35); transform:scale(0.9); border-color:var(--neon-cyan); box-shadow:0 0 15px rgba(0,229,255,0.5); }
         .soft-btn::after { content:'↓'; font-size:24px; }
-        .hard-btn::after { content:'⏬💥'; font-size:18px; }
+        .hard-btn::after { content:'🏃‍♂️'; font-size:22px; }
 
         /* Overlay messages */
         .special-overlay {
@@ -173,7 +173,6 @@
                 </div>
                 <div class="mobile-next"><canvas id="nextCanvasMobile" width="60" height="40"></canvas></div>
                 <button class="mobile-pause-btn" id="mobilePauseBtn">Pause</button>
-                <button class="big-action-btn" id="bigActionBtn">Start</button>
                 <div class="action-btns-row">
                     <div class="action-btn soft-btn" id="softDropBtn" title="Soft drop"></div>
                     <div class="action-btn hard-btn" id="hardDropBtn" title="Hard drop"></div>
@@ -192,6 +191,9 @@
             <button class="btn btn-pause" id="btnPause" style="display:none;">Pause</button>
         </div>
     </div>
+
+    <!-- Resume/Start button moved outside the board to prevent blurring -->
+    <button class="big-action-btn" id="bigActionBtn">Start</button>
 
     <script>
         (function() {
@@ -243,12 +245,12 @@
                 gameCanvas.style.width = canvasWidth + 'px';
                 gameCanvas.style.height = canvasHeight + 'px';
 
-                // To eliminate left/right gaps, use full width for the board
                 CELL_SIZE = canvasWidth / COLS;
                 boardWidth = canvasWidth;
                 boardHeight = CELL_SIZE * ROWS;
                 boardOffsetX = 0;
-                boardOffsetY = (canvasHeight - boardHeight) / 2; // center vertically
+                // Push board down enough to clear top HUD (min 100px)
+                boardOffsetY = Math.max(100, (canvasHeight - boardHeight) / 2);
             }
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
@@ -461,25 +463,40 @@
                 }
             }
 
-            // ===================== LONG PRESS SOFT DROP =====================
+            // ===================== LONG PRESS BY ZONE =====================
             let longPressTimer = null;
-            let softDropInterval = null;
-            function startLongPress() {
-                if (longPressTimer) return;
+            let repeatInterval = null;
+            let currentZone = null; // 'left', 'middle', 'right'
+
+            function stopLongPress() {
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                if (repeatInterval) { clearInterval(repeatInterval); repeatInterval = null; }
+                currentZone = null;
+            }
+
+            function startLongPress(zone) {
+                stopLongPress();
+                if (!gameRunning || gamePaused || gameOver) return;
+                currentZone = zone;
                 longPressTimer = setTimeout(() => {
                     longPressTimer = null;
                     if (!gameRunning || gamePaused || gameOver) return;
-                    softDropInterval = setInterval(() => {
-                        if (!softDrop()) {
-                            lockPiece();
-                            stopLongPress();
-                        }
-                    }, 50);
+                    if (zone === 'middle') {
+                        repeatInterval = setInterval(() => {
+                            if (!softDrop()) { lockPiece(); stopLongPress(); }
+                        }, 50);
+                    } else if (zone === 'left') {
+                        repeatInterval = setInterval(() => {
+                            if (!movePiece(0, -1)) { stopLongPress(); }
+                            else sfxMove();
+                        }, 100);
+                    } else if (zone === 'right') {
+                        repeatInterval = setInterval(() => {
+                            if (!movePiece(0, 1)) { stopLongPress(); }
+                            else sfxMove();
+                        }, 100);
+                    }
                 }, 300);
-            }
-            function stopLongPress() {
-                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-                if (softDropInterval) { clearInterval(softDropInterval); softDropInterval = null; }
             }
 
             // ===================== DRAWING =====================
@@ -588,7 +605,7 @@
                 else if (e.code==='Escape'||e.code==='KeyP') { e.preventDefault(); togglePause(); }
             });
 
-            // Mobile touch handling
+            // Mobile touch handling – tap zones, swipe, and long press by zone
             let touchStartX=0, touchStartY=0, touchStartTime=0;
             let touchMoved = false;
 
@@ -601,7 +618,13 @@
                     touchStartTime = Date.now();
                     touchMoved = false;
                     if (gameRunning && !gamePaused && !gameOver) {
-                        startLongPress();
+                        const canvasRect = gameCanvas.getBoundingClientRect();
+                        const relX = touchStartX - canvasRect.left;
+                        const leftZoneEnd = 0.25 * canvasRect.width;
+                        const rightZoneStart = 0.75 * canvasRect.width;
+                        if (relX < leftZoneEnd) startLongPress('left');
+                        else if (relX > rightZoneStart) startLongPress('right');
+                        else startLongPress('middle');
                     }
                 }
             }, {passive:false});
@@ -658,7 +681,7 @@
             document.getElementById('softDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); softDrop(); });
             document.getElementById('hardDropBtn').addEventListener('click', (e)=>{ e.stopPropagation(); initAudio(); hardDrop(); });
 
-            // Big centered button
+            // Big centered button (outside the board, on top of blur)
             const bigActionBtn = document.getElementById('bigActionBtn');
             bigActionBtn.addEventListener('click', (e)=>{
                 e.stopPropagation();
