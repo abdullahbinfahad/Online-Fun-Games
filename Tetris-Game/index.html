@@ -228,18 +228,34 @@
             let isMobile = window.innerWidth < 769;
             let DPR = window.devicePixelRatio || 1;
 
+            function getViewportSize() {
+                if (window.visualViewport && isMobile) {
+                    return {
+                        width: window.visualViewport.width,
+                        height: window.visualViewport.height
+                    };
+                }
+                return {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                };
+            }
+
             function calcCellSize() {
                 isMobile = window.innerWidth < 769;
                 DPR = window.devicePixelRatio || 1;
+                const viewport = getViewportSize();
+
                 if (isMobile) {
-                    const canvasWidth = window.innerWidth;
-                    const canvasHeight = window.innerHeight;
+                    const canvasWidth = viewport.width;
+                    const canvasHeight = viewport.height;
                     gameCanvas.width = canvasWidth * DPR;
                     gameCanvas.height = canvasHeight * DPR;
                     gameCanvas.style.width = canvasWidth + 'px';
                     gameCanvas.style.height = canvasHeight + 'px';
                     gameCtx.setTransform(1, 0, 0, 1, 0, 0);
                     gameCtx.scale(DPR, DPR);
+
                     const cellFromWidth = canvasWidth / COLS;
                     const cellFromHeight = canvasHeight / ROWS;
                     CELL_SIZE = Math.min(cellFromWidth, cellFromHeight);
@@ -256,6 +272,7 @@
                     gameCanvas.style.height = canvasHeight + 'px';
                     gameCtx.setTransform(1, 0, 0, 1, 0, 0);
                     gameCtx.scale(DPR, DPR);
+
                     const fromH = Math.floor(canvasHeight / ROWS);
                     const fromW = Math.floor(canvasWidth / COLS);
                     CELL_SIZE = Math.max(20, Math.min(38, Math.min(fromH, fromW)));
@@ -268,6 +285,12 @@
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
             window.addEventListener('orientationchange', () => setTimeout(calcCellSize, 200));
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    calcCellSize();
+                    drawBoard();
+                });
+            }
 
             // ===================== GAME STATE =====================
             const SHAPES = [
@@ -521,12 +544,11 @@
                 ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+1,y+1,s-2,s-2);
             }
             function drawBoard() {
-                const canvasW = gameCanvas.width / DPR;   // logical width after scaling
+                const canvasW = gameCanvas.width / DPR;
                 const canvasH = gameCanvas.height / DPR;
                 gameCtx.clearRect(0,0,canvasW,canvasH);
 
                 if (isMobile) {
-                    // Full‑screen look: fill canvas with board background and grid everywhere
                     gameCtx.fillStyle = '#0d0d20';
                     gameCtx.fillRect(0,0,canvasW,canvasH);
                     gameCtx.strokeStyle='rgba(255,255,255,0.04)';
@@ -544,7 +566,6 @@
                         gameCtx.stroke();
                     }
                 } else {
-                    // Desktop: only board area has dark background, rest matches page
                     gameCtx.fillStyle = '#0a0a14';
                     gameCtx.fillRect(0,0,canvasW,canvasH);
                     gameCtx.fillStyle = '#0d0d20';
