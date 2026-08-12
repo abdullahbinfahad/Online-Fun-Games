@@ -1,18 +1,14 @@
-// script.js
 (function () {
     'use strict';
 
-    // ──────────────────────────────────────
-    // DOM Elements
-    // ──────────────────────────────────────
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreDisplay = document.getElementById('scoreDisplay');
     const bestDisplay = document.getElementById('bestDisplay');
 
-    // ──────────────────────────────────────
-    // Responsive Scaling
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Responsive canvas
+    // ──────────────────────────────────
     const MAX_DPR = 2;
     let W, H, DPR;
 
@@ -33,7 +29,6 @@
         const prevW = W;
         const prevH = H;
         resize();
-        // Proportional repositioning
         bird.x = (bird.x / prevW) * W;
         bird.y = Math.min(bird.y, H - GROUND_H - BIRD_R);
         pipes.forEach(p => {
@@ -42,56 +37,53 @@
             p.capH = PIPE_CAP_H;
         });
         updateDimensions();
+        generateCity();
     });
-    window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+    window.addEventListener('orientationchange', () => setTimeout(resize, 300));
 
-    // ──────────────────────────────────────
-    // Game Dimensions (recalculated on resize)
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Dynamic dimensions
+    // ──────────────────────────────────
     let BIRD_R, PIPE_W, PIPE_GAP, GROUND_H, PIPE_CAP_H;
     let PIPE_SPEED, GRAVITY, JUMP_VEL, MAX_FALL, SPAWN_INTERVAL;
 
     function updateDimensions() {
-        BIRD_R = Math.max(13, Math.min(26, H * 0.042));
-        PIPE_W = Math.max(38, Math.min(72, W * 0.095));
-        PIPE_GAP = Math.max(105, Math.min(190, H * 0.25));
-        GROUND_H = Math.max(48, Math.min(90, H * 0.11));
-        PIPE_CAP_H = Math.max(18, Math.min(32, H * 0.04));
-        PIPE_SPEED = Math.max(1.6, Math.min(3.8, W * 0.0042));
-        GRAVITY = Math.max(0.28, Math.min(0.65, H * 0.0008));
-        JUMP_VEL = Math.max(-6.2, Math.min(-3.6, -H * 0.0085));
-        MAX_FALL = Math.max(5.5, Math.min(11, H * 0.015));
-        SPAWN_INTERVAL = Math.max(170, Math.min(340, W * 0.4));
+        BIRD_R = Math.max(14, Math.min(28, H * 0.044));
+        PIPE_W = Math.max(42, Math.min(76, W * 0.1));
+        PIPE_GAP = Math.max(108, Math.min(195, H * 0.26));
+        GROUND_H = Math.max(50, Math.min(95, H * 0.12));
+        PIPE_CAP_H = Math.max(20, Math.min(34, H * 0.042));
+        PIPE_SPEED = Math.max(1.8, Math.min(4.2, W * 0.0046));
+        GRAVITY = Math.max(0.3, Math.min(0.68, H * 0.00085));
+        JUMP_VEL = Math.max(-6.5, Math.min(-3.8, -H * 0.009));
+        MAX_FALL = Math.max(6, Math.min(12, H * 0.016));
+        SPAWN_INTERVAL = Math.max(190, Math.min(360, W * 0.44));
     }
     updateDimensions();
 
-    // ──────────────────────────────────────
-    // Game State
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Game state
+    // ──────────────────────────────────
     const STATE = { PRE: 'prestart', RUN: 'running', OVER: 'over' };
     let gameMode = STATE.PRE;
     let score = 0;
     let bestScore = 0;
     let pipes = [];
     let particles = [];
-    let clouds = [];
     let groundOffset = 0;
     let shakeMag = 0;
     let flashAlpha = 0;
     let timeOver = null;
     let frameCount = 0;
 
-    // Load best score
     try {
-        bestScore = parseInt(localStorage.getItem('flappyBest_v2') || '0');
-    } catch (e) {
-        bestScore = 0;
-    }
+        bestScore = parseInt(localStorage.getItem('flappyCyberBest') || '0');
+    } catch (e) { bestScore = 0; }
     bestDisplay.textContent = '🏆 ' + bestScore;
 
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     // Bird
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     const bird = {
         x: 0,
         y: 0,
@@ -103,20 +95,20 @@
 
     function resetBird() {
         bird.x = W * 0.28;
-        bird.y = H * 0.44;
+        bird.y = H * 0.45;
         bird.vy = 0;
         bird.angle = 0;
         bird.wingPhase = 0;
         bird.blinkTimer = Math.random() * 3 + 2;
     }
 
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     // Pipes
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     function spawnPipe(x) {
         const groundY = H - GROUND_H;
-        const minTop = PIPE_CAP_H + 25;
-        const maxTop = groundY - PIPE_GAP - PIPE_CAP_H - 25;
+        const minTop = PIPE_CAP_H + 30;
+        const maxTop = groundY - PIPE_GAP - PIPE_CAP_H - 30;
         const gapCenter = minTop + Math.random() * (maxTop - minTop);
         pipes.push({
             x: x,
@@ -130,40 +122,59 @@
 
     function resetPipes() {
         pipes = [];
-        const startX = W + 80;
-        for (let i = 0; i < 5; i++) {
-            spawnPipe(startX + i * SPAWN_INTERVAL);
-        }
+        const startX = W + 120;
+        for (let i = 0; i < 5; i++) spawnPipe(startX + i * SPAWN_INTERVAL);
     }
 
-    // ──────────────────────────────────────
-    // Clouds
-    // ──────────────────────────────────────
-    function generateClouds() {
-        clouds = [];
-        const count = Math.floor(W / 160) + 3;
+    // ──────────────────────────────────
+    // Cyberpunk City Background
+    // ──────────────────────────────────
+    let cityBuildings = [];
+    let cityScrollOffset = 0;
+    const CITY_SCROLL_SPEED_FACTOR = 0.22;
+
+    function generateCity() {
+        cityBuildings = [];
+        const count = Math.floor(W / 55) + 10;
         for (let i = 0; i < count; i++) {
-            clouds.push({
-                x: Math.random() * W * 1.4,
-                y: Math.random() * H * 0.45 + H * 0.03,
-                w: Math.random() * 90 + 55,
-                h: Math.random() * 28 + 16,
-                speed: Math.random() * 0.3 + 0.12,
-                opacity: Math.random() * 0.3 + 0.15,
-                bubbles: [
-                    { rx: 0, ry: 0, r: Math.random() * 16 + 14 },
-                    { rx: Math.random() * 35 + 12, ry: Math.random() * 12 - 6, r: Math.random() * 20 + 16 },
-                    { rx: Math.random() * 35 + 16, ry: Math.random() * 10 - 5, r: Math.random() * 18 + 12 },
-                    { rx: -Math.random() * 28 - 8, ry: Math.random() * 8 - 4, r: Math.random() * 18 + 10 },
-                ],
+            const w = 40 + Math.random() * 80;
+            const h = H * 0.35 + Math.random() * H * 0.45;
+            const x = i * (W / count) + (Math.random() - 0.5) * 30;
+            const windowRows = Math.floor(h / 25);
+            const windowCols = Math.floor(w / 16);
+            const windows = [];
+            for (let r = 0; r < windowRows; r++) {
+                for (let c = 0; c < windowCols; c++) {
+                    if (Math.random() > 0.3) {
+                        windows.push({
+                            rx: c * 16 + 6,
+                            ry: r * 25 + 12,
+                            w: 8,
+                            h: 10,
+                            lit: Math.random() > 0.4,
+                            color: ['#00ffff', '#ff00ff', '#ffff00', '#39ff14', '#ff6600'][Math.floor(Math.random() * 5)]
+                        });
+                    }
+                }
+            }
+            cityBuildings.push({
+                x,
+                y: H - GROUND_H - h,
+                w,
+                h,
+                windows,
+                neonLines: Math.random() > 0.6,
+                signText: null,
+                signTimer: 0,
             });
         }
+        cityBuildings.sort((a, b) => a.x - b.x);
     }
-    generateClouds();
+    generateCity();
 
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     // Particles
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     function emitParticles(x, y, count, color, spread, life) {
         for (let i = 0; i < count; i++) {
             const a = Math.random() * Math.PI * 2;
@@ -192,9 +203,9 @@
         }
     }
 
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     // Collision
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     function rectCircleCollision(rx, ry, rw, rh, cx, cy, cr) {
         const closestX = Math.max(rx, Math.min(cx, rx + rw));
         const closestY = Math.max(ry, Math.min(cy, ry + rh));
@@ -205,29 +216,25 @@
 
     function checkCollisions() {
         const groundY = H - GROUND_H;
-        // Ground / ceiling
         if (bird.y + BIRD_R >= groundY || bird.y - BIRD_R <= 0) return true;
-        // Pipes
         for (const p of pipes) {
-            if (
-                rectCircleCollision(p.x, 0, p.width, p.topH, bird.x, bird.y, BIRD_R * 0.85) ||
-                rectCircleCollision(p.x, p.bottomY, p.width, groundY - p.bottomY, bird.x, bird.y, BIRD_R * 0.85)
-            ) {
+            if (rectCircleCollision(p.x, 0, p.width, p.topH, bird.x, bird.y, BIRD_R * 0.85) ||
+                rectCircleCollision(p.x, p.bottomY, p.width, groundY - p.bottomY, bird.x, bird.y, BIRD_R * 0.85))
                 return true;
-            }
         }
         return false;
     }
 
-    // ──────────────────────────────────────
-    // Game Flow
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Game flow
+    // ──────────────────────────────────
     function startGame() {
         resetBird();
         resetPipes();
         score = 0;
         particles = [];
         groundOffset = 0;
+        cityScrollOffset = 0;
         shakeMag = 0;
         flashAlpha = 0;
         timeOver = null;
@@ -235,32 +242,28 @@
         scoreDisplay.textContent = '0';
         scoreDisplay.classList.remove('pulse');
         bird.vy = JUMP_VEL;
-        emitParticles(bird.x, bird.y + BIRD_R * 0.6, 14, '#ffffff', 5, 0.5);
+        emitParticles(bird.x, bird.y + BIRD_R * 0.6, 12, '#ffffff', 5, 0.5);
     }
 
     function endGame() {
         if (gameMode !== STATE.RUN) return;
         gameMode = STATE.OVER;
         timeOver = Date.now();
-        shakeMag = 16;
-        flashAlpha = 0.6;
+        shakeMag = 18;
+        flashAlpha = 0.7;
         if (score > bestScore) {
             bestScore = score;
-            try { localStorage.setItem('flappyBest_v2', bestScore); } catch (e) {}
+            try { localStorage.setItem('flappyCyberBest', bestScore); } catch (e) {}
             bestDisplay.textContent = '🏆 ' + bestScore;
         }
-        emitParticles(bird.x, bird.y, 30, '#ffd700', 6, 0.75);
-        emitParticles(bird.x, bird.y, 22, '#ff6b35', 4.5, 0.55);
-        emitParticles(bird.x, bird.y, 18, '#ffffff', 3.5, 0.45);
+        emitParticles(bird.x, bird.y, 28, '#ffd700', 6, 0.8);
+        emitParticles(bird.x, bird.y, 20, '#ff00ff', 5, 0.6);
+        emitParticles(bird.x, bird.y, 16, '#00ffff', 4, 0.5);
     }
 
-    function restartGame() {
-        startGame();
-    }
-
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     // Input
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
     function handleInput(e) {
         if (e) e.preventDefault();
         switch (gameMode) {
@@ -273,9 +276,7 @@
                 emitParticles(bird.x, bird.y + BIRD_R * 0.5, 8, '#ffffff', 4, 0.4);
                 break;
             case STATE.OVER:
-                if (timeOver && Date.now() - timeOver > 500) {
-                    restartGame();
-                }
+                if (timeOver && Date.now() - timeOver > 500) startGame();
                 break;
         }
     }
@@ -285,153 +286,183 @@
     canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
     canvas.addEventListener('mousedown', handleInput);
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
-            handleInput(e);
-        }
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') handleInput(e);
     });
     document.addEventListener('gesturestart', (e) => e.preventDefault());
     document.addEventListener('gesturechange', (e) => e.preventDefault());
     document.addEventListener('gestureend', (e) => e.preventDefault());
 
-    // ──────────────────────────────────────
-    // Drawing Helpers
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Drawing helpers
+    // ──────────────────────────────────
     function drawSky() {
         const grad = ctx.createLinearGradient(0, 0, 0, H);
-        grad.addColorStop(0, '#0b1a30');
-        grad.addColorStop(0.22, '#1a3a5c');
-        grad.addColorStop(0.45, '#3d7ea6');
-        grad.addColorStop(0.72, '#7ab8d4');
-        grad.addColorStop(1, '#b8dff0');
+        grad.addColorStop(0, '#050a14');
+        grad.addColorStop(0.2, '#0a1226');
+        grad.addColorStop(0.45, '#162040');
+        grad.addColorStop(0.7, '#1a2d4a');
+        grad.addColorStop(1, '#1e3858');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
-        // Warm horizon glow
-        const glow = ctx.createRadialGradient(W * 0.55, H * 0.72, H * 0.04, W * 0.5, H * 0.78, H * 0.65);
-        glow.addColorStop(0, 'rgba(255,210,160,0.22)');
-        glow.addColorStop(0.5, 'rgba(255,190,140,0.07)');
-        glow.addColorStop(1, 'rgba(255,170,120,0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, W, H);
-
-        // Stars (subtle, top portion)
-        if (gameMode === STATE.PRE) {
-            for (let i = 0; i < 35; i++) {
-                const sx = (i * 137.5 + 50) % W;
-                const sy = (i * 89.3 + 30) % (H * 0.35);
-                const twinkle = 0.3 + Math.sin(frameCount * 0.03 + i) * 0.3;
-                ctx.fillStyle = `rgba(255,255,255,${twinkle})`;
-                ctx.beginPath();
-                ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        for (let i = 0; i < 60; i++) {
+            const sx = (i * 147 + 30) % W;
+            const sy = (i * 89 + 15) % (H * 0.5);
+            const twinkle = 0.25 + Math.sin(frameCount * 0.03 + i) * 0.35;
+            ctx.fillStyle = `rgba(255,255,255,${twinkle})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1 + Math.random() * 1.2, 0, Math.PI * 2);
+            ctx.fill();
         }
+        const hazeGrad = ctx.createRadialGradient(W * 0.7, H * 0.6, H * 0.1, W * 0.5, H * 0.65, H * 0.8);
+        hazeGrad.addColorStop(0, 'rgba(0,255,255,0.05)');
+        hazeGrad.addColorStop(0.4, 'rgba(255,0,255,0.03)');
+        hazeGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = hazeGrad;
+        ctx.fillRect(0, 0, W, H);
     }
 
-    function drawClouds() {
-        clouds.forEach(c => {
-            ctx.save();
-            ctx.globalAlpha = c.opacity;
-            c.bubbles.forEach(b => {
-                const cx = c.x + b.rx;
-                const cy = c.y + b.ry;
-                const g = ctx.createRadialGradient(cx - b.r * 0.2, cy - b.r * 0.25, b.r * 0.08, cx, cy, b.r);
-                g.addColorStop(0, 'rgba(255,255,255,0.95)');
-                g.addColorStop(0.45, 'rgba(255,255,255,0.65)');
-                g.addColorStop(1, 'rgba(255,255,255,0)');
-                ctx.fillStyle = g;
+    function drawCity() {
+        ctx.save();
+        const scrollSpeed = PIPE_SPEED * CITY_SCROLL_SPEED_FACTOR;
+        const offset = cityScrollOffset % (W * 1.5);
+        const groundY = H - GROUND_H;
+
+        cityBuildings.forEach(b => {
+            let drawX = b.x - offset;
+            if (drawX > W + 100) drawX -= W * 1.5;
+            if (drawX < -200) drawX += W * 1.5;
+            if (drawX + b.w < -20 || drawX > W + 20) return;
+
+            const bodyGrad = ctx.createLinearGradient(drawX, b.y, drawX, b.y + b.h);
+            bodyGrad.addColorStop(0, '#111833');
+            bodyGrad.addColorStop(0.3, '#1b2640');
+            bodyGrad.addColorStop(0.8, '#0c1020');
+            bodyGrad.addColorStop(1, '#060912');
+            ctx.fillStyle = bodyGrad;
+            ctx.fillRect(drawX, b.y, b.w, b.h);
+
+            if (b.neonLines) {
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 8;
                 ctx.beginPath();
-                ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.moveTo(drawX, b.y);
+                ctx.lineTo(drawX + b.w, b.y);
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+            }
+
+            b.windows.forEach(win => {
+                const wx = drawX + win.rx;
+                const wy = b.y + win.ry;
+                if (win.lit) {
+                    ctx.fillStyle = win.color;
+                    ctx.shadowColor = win.color;
+                    ctx.shadowBlur = 7;
+                    ctx.fillRect(wx, wy, win.w, win.h);
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                } else {
+                    ctx.fillStyle = 'rgba(20,30,50,0.8)';
+                    ctx.fillRect(wx, wy, win.w, win.h);
+                }
             });
-            ctx.restore();
+
+            if (score >= 3 && b.signText === null && b.w > 60 && b.h > H * 0.4) {
+                if (Math.random() < 0.03) {
+                    b.signText = 'ABDULLAH BIN FAHAD';
+                    b.signTimer = performance.now();
+                }
+            }
+            if (b.signText) {
+                const elapsed = (performance.now() - b.signTimer) / 1000;
+                const alpha = Math.min(1, elapsed * 0.5);
+                const fontSize = Math.max(10, Math.min(18, b.w * 0.13));
+                ctx.save();
+                ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = `rgba(255,0,255,${alpha})`;
+                ctx.shadowColor = '#ff00ff';
+                ctx.shadowBlur = 12;
+                ctx.fillText(b.signText, drawX + b.w / 2, b.y + 30);
+                ctx.restore();
+            }
         });
+        ctx.restore();
     }
 
     function drawGround() {
         const gy = H - GROUND_H;
-        // Earth
-        const earthGrad = ctx.createLinearGradient(0, gy, 0, H);
-        earthGrad.addColorStop(0, '#5c3a1e');
-        earthGrad.addColorStop(0.3, '#4a2d14');
-        earthGrad.addColorStop(0.7, '#3a2010');
-        earthGrad.addColorStop(1, '#241208');
-        ctx.fillStyle = earthGrad;
+        const gGrad = ctx.createLinearGradient(0, gy, 0, H);
+        gGrad.addColorStop(0, '#111a2c');
+        gGrad.addColorStop(0.15, '#0d1320');
+        gGrad.addColorStop(0.5, '#070b14');
+        gGrad.addColorStop(1, '#020408');
+        ctx.fillStyle = gGrad;
         ctx.fillRect(0, gy, W, GROUND_H);
 
-        // Grass band
-        const grassGrad = ctx.createLinearGradient(0, gy - 4, 0, gy + 12);
-        grassGrad.addColorStop(0, '#5ca84a');
-        grassGrad.addColorStop(0.35, '#4a9438');
-        grassGrad.addColorStop(0.6, '#3d7a2d');
-        grassGrad.addColorStop(1, '#2d5a1e');
-        ctx.fillStyle = grassGrad;
-        ctx.fillRect(0, gy - 1, W, 14);
+        ctx.strokeStyle = 'rgba(0,255,255,0.08)';
+        ctx.lineWidth = 1;
+        const spacing = 40;
+        const offX = groundOffset % spacing;
+        for (let x = -offX; x < W + spacing; x += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(x, gy);
+            ctx.lineTo(x, H);
+            ctx.stroke();
+        }
+        for (let y = gy; y < H; y += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+        }
 
-        // Grass highlight line
-        ctx.strokeStyle = 'rgba(160,220,140,0.45)';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = 'rgba(0,255,255,0.4)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, gy);
         ctx.lineTo(W, gy);
         ctx.stroke();
-
-        // Grass blades
-        const spacing = 16;
-        const off = groundOffset % spacing;
-        ctx.fillStyle = '#7cc96c';
-        for (let x = -off; x < W + spacing; x += spacing) {
-            const bh = 7 + Math.sin(x * 0.5 + groundOffset * 0.08) * 4;
-            ctx.beginPath();
-            ctx.moveTo(x, gy);
-            ctx.lineTo(x + 2.5, gy - bh);
-            ctx.lineTo(x - 2.5, gy - bh);
-            ctx.closePath();
-            ctx.fill();
-        }
-        ctx.fillStyle = '#3d8a30';
-        for (let x = -off + 8; x < W + spacing; x += spacing) {
-            const bh = 4 + Math.cos(x * 0.45 + groundOffset * 0.07) * 3;
-            ctx.beginPath();
-            ctx.moveTo(x, gy);
-            ctx.lineTo(x + 2, gy - bh);
-            ctx.lineTo(x - 2, gy - bh);
-            ctx.closePath();
-            ctx.fill();
-        }
     }
 
-    function drawPipeBody(x, y, w, h, capH, isBottom) {
+    function drawPipe(pipe) {
+        const gy = H - GROUND_H;
+        drawPipeSegment(pipe.x, 0, pipe.width, pipe.topH, pipe.capH, false);
+        drawPipeSegment(pipe.x, pipe.bottomY, pipe.width, gy - pipe.bottomY, pipe.capH, true);
+    }
+
+    function drawPipeSegment(x, y, w, h, capH, isBottom) {
         const capY = isBottom ? y : y + h - capH;
         const bodyTop = isBottom ? y + capH : y;
         const bodyH = h - capH;
         const overhang = w * 0.16;
 
-        // Body gradient
         const bodyGrad = ctx.createLinearGradient(x, 0, x + w, 0);
-        bodyGrad.addColorStop(0, '#2d8a2d');
-        bodyGrad.addColorStop(0.3, '#4ab84e');
-        bodyGrad.addColorStop(0.5, '#5dc95d');
-        bodyGrad.addColorStop(0.7, '#4ab84e');
+        bodyGrad.addColorStop(0, '#1a5c1a');
+        bodyGrad.addColorStop(0.3, '#2d8a2d');
+        bodyGrad.addColorStop(0.5, '#4ab84e');
+        bodyGrad.addColorStop(0.7, '#2d8a2d');
         bodyGrad.addColorStop(1, '#1a5c1a');
         ctx.fillStyle = bodyGrad;
         ctx.fillRect(x, bodyTop, w, bodyH);
 
-        // Highlight stripe
-        const hlGrad = ctx.createLinearGradient(x, 0, x + w, 0);
-        hlGrad.addColorStop(0, 'rgba(255,255,255,0)');
-        hlGrad.addColorStop(0.22, 'rgba(255,255,255,0.16)');
-        hlGrad.addColorStop(0.4, 'rgba(255,255,255,0.22)');
-        hlGrad.addColorStop(0.5, 'rgba(255,255,255,0.1)');
-        hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = hlGrad;
+        ctx.fillStyle = 'rgba(0,255,255,0.15)';
         ctx.fillRect(x, bodyTop, w, bodyH);
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 1;
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.moveTo(x, bodyTop);
+        ctx.lineTo(x + w, bodyTop);
+        ctx.stroke();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
 
-        // Dark edge
-        ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillRect(x + w - 2.5, bodyTop, 2.5, bodyH);
-
-        // Cap
         const capGrad = ctx.createLinearGradient(x - overhang, 0, x + w + overhang, 0);
         capGrad.addColorStop(0, '#1a5c1a');
         capGrad.addColorStop(0.3, '#3da83d');
@@ -440,36 +471,21 @@
         capGrad.addColorStop(1, '#1a5c1a');
         ctx.fillStyle = capGrad;
         ctx.fillRect(x - overhang, capY, w + overhang * 2, capH);
-
-        // Cap shadow
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(x - overhang, capY + capH - 2.5, w + overhang * 2, 2.5);
-
-        // Cap highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        ctx.fillRect(x - overhang, capY, w + overhang * 2, 1.5);
-    }
-
-    function drawPipe(pipe) {
-        const gy = H - GROUND_H;
-        drawPipeBody(pipe.x, 0, pipe.width, pipe.topH, pipe.capH, false);
-        drawPipeBody(pipe.x, pipe.bottomY, pipe.width, gy - pipe.bottomY, pipe.capH, true);
+        ctx.fillRect(x - overhang, capY + capH - 2, w + overhang * 2, 2);
     }
 
     function drawBird() {
         ctx.save();
         ctx.translate(bird.x, bird.y);
         ctx.rotate((bird.angle * Math.PI) / 180);
-
         const r = BIRD_R;
 
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.beginPath();
-        ctx.arc(2, 2.5, r, 0, Math.PI * 2);
+        ctx.arc(2, 3, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Body
         const bodyGrad = ctx.createRadialGradient(-r * 0.2, -r * 0.3, r * 0.08, 0, 0, r);
         bodyGrad.addColorStop(0, '#ffe566');
         bodyGrad.addColorStop(0.45, '#ffd700');
@@ -479,22 +495,17 @@
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
-
-        // Highlight
-        const hlGrad = ctx.createRadialGradient(-r * 0.28, -r * 0.35, r * 0.04, 0, 0, r);
+        const hlGrad = ctx.createRadialGradient(-r * 0.25, -r * 0.35, r * 0.04, 0, 0, r);
         hlGrad.addColorStop(0, 'rgba(255,255,255,0.5)');
-        hlGrad.addColorStop(0.5, 'rgba(255,255,255,0.12)');
         hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = hlGrad;
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Wing
-        const wingFlap = bird.wingPhase;
         ctx.save();
         ctx.translate(r * 0.12, -r * 0.18);
-        ctx.rotate(wingFlap);
+        ctx.rotate(bird.wingPhase);
         const wingGrad = ctx.createLinearGradient(0, -r * 0.65, 0, r * 0.35);
         wingGrad.addColorStop(0, '#f5c400');
         wingGrad.addColorStop(0.55, '#e8a800');
@@ -508,7 +519,6 @@
         ctx.stroke();
         ctx.restore();
 
-        // Tail
         ctx.fillStyle = '#e8a800';
         ctx.beginPath();
         ctx.moveTo(-r * 0.75, -r * 0.25);
@@ -526,28 +536,22 @@
         ctx.closePath();
         ctx.fill();
 
-        // Eye
-        const ex = r * 0.38;
-        const ey = -r * 0.28;
-        const er = r * 0.3;
-        ctx.fillStyle = '#ffffff';
+        const ex = r * 0.38, ey = -r * 0.28, er = r * 0.3;
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(ex, ey, er, 0, Math.PI * 2);
         ctx.fill();
         const pr = er * 0.52;
-        ctx.fillStyle = '#111111';
+        ctx.fillStyle = '#111';
         ctx.beginPath();
         ctx.arc(ex + er * 0.18, ey, pr, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(ex + er * 0.04, ey - pr * 0.32, pr * 0.32, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cheek
-        const chx = ex + er + r * 0.12;
-        const chy = ey + r * 0.28;
-        const chr = r * 0.18;
+        const chx = ex + er + r * 0.12, chy = ey + r * 0.28, chr = r * 0.18;
         const chGrad = ctx.createRadialGradient(chx, chy, chr * 0.08, chx, chy, chr);
         chGrad.addColorStop(0, 'rgba(255,140,140,0.55)');
         chGrad.addColorStop(1, 'rgba(255,140,140,0)');
@@ -556,9 +560,7 @@
         ctx.arc(chx, chy, chr, 0, Math.PI * 2);
         ctx.fill();
 
-        // Beak
-        const bx = r * 0.82;
-        const by = -r * 0.04;
+        const bx = r * 0.82, by = -r * 0.04;
         const beakGrad = ctx.createLinearGradient(bx, by - r * 0.2, bx + r * 0.5, by);
         beakGrad.addColorStop(0, '#ff6b35');
         beakGrad.addColorStop(1, '#e8451a');
@@ -576,108 +578,91 @@
     function drawParticles() {
         particles.forEach(p => {
             const alpha = Math.max(0, p.life / p.maxLife);
-            const s = 0.5 + alpha * 0.5;
             ctx.globalAlpha = alpha;
             ctx.fillStyle = p.color;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r * s, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.r * (0.5 + alpha * 0.5), 0, Math.PI * 2);
             ctx.fill();
         });
         ctx.globalAlpha = 1;
     }
 
     function drawOverlay() {
-        // Semi-transparent backdrop
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fillRect(0, 0, W, H);
-
-        // Panel
-        const pw = Math.min(320, W * 0.78);
-        const ph = Math.min(240, H * 0.38);
-        const px = W / 2 - pw / 2;
-        const py = H / 2 - ph / 2 - H * 0.04;
-        const pr = 18;
-
-        ctx.fillStyle = 'rgba(20,22,40,0.88)';
-        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-        ctx.lineWidth = 1.5;
+        const pw = Math.min(340, W * 0.8), ph = Math.min(260, H * 0.4);
+        const px = W / 2 - pw / 2, py = H / 2 - ph / 2 - H * 0.03;
+        ctx.fillStyle = 'rgba(5,10,20,0.9)';
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        roundRect(px, py, pw, ph, pr);
+        roundRect(px, py, pw, ph, 18);
         ctx.fill();
         ctx.stroke();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
 
-        // Game Over text
         const goSize = Math.max(28, Math.min(48, H * 0.06));
-        ctx.font = `bold ${goSize}px 'Fredoka One', 'Poppins', cursive, sans-serif`;
+        ctx.font = `bold ${goSize}px 'Orbitron', sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#ff5555';
-        ctx.fillText('Game Over', W / 2, py + ph * 0.32);
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 12;
+        ctx.fillText('GAME OVER', W / 2, py + ph * 0.32);
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
 
-        // Score
         const scSize = Math.max(20, Math.min(36, H * 0.045));
-        ctx.font = `bold ${scSize}px 'Poppins', sans-serif`;
+        ctx.font = `bold ${scSize}px 'Orbitron', sans-serif`;
         ctx.fillStyle = '#ffffff';
         ctx.fillText('Score: ' + score, W / 2, py + ph * 0.56);
-
-        // Best
         const bsSize = Math.max(13, Math.min(20, H * 0.026));
-        ctx.font = `${bsSize}px 'Poppins', sans-serif`;
-        ctx.fillStyle = '#ffd700';
+        ctx.font = `${bsSize}px 'Orbitron', sans-serif`;
+        ctx.fillStyle = '#ffff00';
         ctx.fillText('Best: ' + bestScore, W / 2, py + ph * 0.72);
-
-        // New best
         if (score >= bestScore && score > 0) {
-            const alpha = 0.55 + Math.sin(Date.now() / 350) * 0.4;
-            ctx.fillStyle = `rgba(255,229,100,${alpha})`;
-            ctx.fillText('⭐ New Best! ⭐', W / 2, py + ph * 0.88);
+            ctx.fillStyle = '#00ffff';
+            ctx.fillText('★ NEW BEST ★', W / 2, py + ph * 0.88);
         }
-
-        // Restart hint
         const hintSize = Math.max(12, Math.min(17, H * 0.022));
-        ctx.font = `${hintSize}px 'Poppins', sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText('Tap to restart', W / 2, py + ph + hintSize * 2.8);
+        ctx.font = `${hintSize}px 'Orbitron', sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('TAP TO RESTART', W / 2, py + ph + hintSize * 2.8);
     }
 
     function drawStartScreen() {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.fillRect(0, 0, W, H);
-
-        const titleSize = Math.max(36, Math.min(64, H * 0.075));
-        ctx.font = `bold ${titleSize}px 'Fredoka One', 'Poppins', cursive, sans-serif`;
-        ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillText('Flappy Bird', W / 2 + 2, H * 0.27 + 2);
-        const tGrad = ctx.createLinearGradient(0, H * 0.2, 0, H * 0.33);
-        tGrad.addColorStop(0, '#ffe566');
-        tGrad.addColorStop(0.5, '#ffd700');
-        tGrad.addColorStop(1, '#f0a500');
+        ctx.fillRect(0, 0, W, H);
+        const titleSize = Math.max(38, Math.min(68, H * 0.08));
+        ctx.font = `bold ${titleSize}px 'Orbitron', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText('FLAPPY BIRD', W / 2 + 3, H * 0.28 + 3);
+        const tGrad = ctx.createLinearGradient(0, H * 0.2, 0, H * 0.35);
+        tGrad.addColorStop(0, '#00ffff');
+        tGrad.addColorStop(0.5, '#ff00ff');
+        tGrad.addColorStop(1, '#ffff00');
         ctx.fillStyle = tGrad;
-        ctx.fillText('Flappy Bird', W / 2, H * 0.27);
+        ctx.fillText('FLAPPY BIRD', W / 2, H * 0.28);
 
         const instrSize = Math.max(15, Math.min(24, H * 0.03));
-        ctx.font = `600 ${instrSize}px 'Poppins', sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText('Tap, Click or Space to Fly', W / 2, H * 0.46);
-
+        ctx.font = `600 ${instrSize}px 'Orbitron', sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.fillText('TAP / CLICK / SPACE', W / 2, H * 0.47);
         if (bestScore > 0) {
             const bSize = Math.max(13, Math.min(20, H * 0.026));
-            ctx.font = `${bSize}px 'Poppins', sans-serif`;
-            ctx.fillStyle = '#ffd700';
-            ctx.fillText('Best: ' + bestScore, W / 2, H * 0.54);
+            ctx.font = `${bSize}px 'Orbitron', sans-serif`;
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText('BEST: ' + bestScore, W / 2, H * 0.55);
         }
-
-        // Pulsing circle
-        const pulse = 0.4 + Math.sin(Date.now() / 550) * 0.35;
-        ctx.strokeStyle = `rgba(255,255,255,${pulse})`;
+        const pulse = 0.4 + Math.sin(Date.now() / 500) * 0.4;
+        ctx.strokeStyle = `rgba(0,255,255,${pulse})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(W / 2, H * 0.63, 26, 0, Math.PI * 2);
+        ctx.arc(W / 2, H * 0.64, 28, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = `rgba(255,255,255,${pulse * 0.4})`;
-        ctx.beginPath();
-        ctx.arc(W / 2, H * 0.63, 14, 0, Math.PI * 2);
-        ctx.fill();
     }
 
     function roundRect(x, y, w, h, r) {
@@ -694,77 +679,44 @@
         ctx.closePath();
     }
 
-    // ──────────────────────────────────────
-    // Update Loop
-    // ──────────────────────────────────────
+    // ──────────────────────────────────
+    // Update & Render Loop
+    // ──────────────────────────────────
     let lastTime = performance.now();
 
     function update(dt) {
         frameCount++;
+        cityScrollOffset += PIPE_SPEED * CITY_SCROLL_SPEED_FACTOR * dt;
 
-        // Clouds
-        clouds.forEach(c => {
-            c.x -= c.speed * dt;
-            if (c.x + 140 < -40) {
-                c.x = W + Math.random() * 90;
-                c.y = Math.random() * H * 0.45 + H * 0.03;
-            }
-        });
-
-        // Particles
         updateParticles(dt);
-
-        // Shake decay
-        if (shakeMag > 0) {
-            shakeMag *= 0.84;
-            if (shakeMag < 0.25) shakeMag = 0;
-        }
-        if (flashAlpha > 0) {
-            flashAlpha *= 0.87;
-            if (flashAlpha < 0.008) flashAlpha = 0;
-        }
+        if (shakeMag > 0) { shakeMag *= 0.84; if (shakeMag < 0.25) shakeMag = 0; }
+        if (flashAlpha > 0) { flashAlpha *= 0.87; if (flashAlpha < 0.008) flashAlpha = 0; }
 
         switch (gameMode) {
             case STATE.PRE:
-                bird.y = H * 0.44 + Math.sin(Date.now() / 750) * 7;
-                bird.wingPhase = Math.sin(Date.now() / 320) * 0.28;
-                bird.angle = Math.sin(Date.now() / 650) * 2.5;
+                bird.y = H * 0.45 + Math.sin(Date.now() / 700) * 7;
+                bird.wingPhase = Math.sin(Date.now() / 300) * 0.3;
+                bird.angle = Math.sin(Date.now() / 600) * 2.5;
                 groundOffset -= PIPE_SPEED * 0.45 * dt;
                 if (groundOffset < -W) groundOffset += W;
                 break;
-
             case STATE.RUN:
-                // Bird physics
                 bird.vy += GRAVITY * dt;
                 if (bird.vy > MAX_FALL) bird.vy = MAX_FALL;
                 bird.y += bird.vy * dt;
-
-                // Angle
                 const target = bird.vy < 0 ? -20 : Math.min(72, bird.vy * 7.5);
                 bird.angle += (target - bird.angle) * 0.16 * dt;
-
-                // Wing
                 const wingTarget = bird.vy < -1 ? -0.65 : bird.vy > 2 ? 0.5 : 0;
                 bird.wingPhase += (wingTarget - bird.wingPhase) * 0.32 * dt;
-
-                // Blink
                 bird.blinkTimer -= dt * 0.05;
                 if (bird.blinkTimer <= 0) bird.blinkTimer = Math.random() * 3.5 + 2.5;
 
-                // Move pipes
                 const speed = PIPE_SPEED * dt;
-                pipes.forEach(p => (p.x -= speed));
-
-                // Remove off-screen
+                pipes.forEach(p => p.x -= speed);
                 while (pipes.length && pipes[0].x + pipes[0].width < -60) pipes.shift();
-
-                // Spawn
                 const last = pipes[pipes.length - 1];
-                if (!last || last.x < W - SPAWN_INTERVAL) {
-                    spawnPipe(last ? last.x + SPAWN_INTERVAL : W + 120);
-                }
+                if (!last || last.x < W - SPAWN_INTERVAL) spawnPipe(last ? last.x + SPAWN_INTERVAL : W + 120);
 
-                // Score
                 pipes.forEach(p => {
                     if (!p.passed && p.x + p.width / 2 < bird.x) {
                         p.passed = true;
@@ -772,18 +724,13 @@
                         scoreDisplay.textContent = score;
                         scoreDisplay.classList.add('pulse');
                         setTimeout(() => scoreDisplay.classList.remove('pulse'), 150);
-                        emitParticles(bird.x + BIRD_R, bird.y, 7, '#ffd700', 3, 0.35);
+                        emitParticles(bird.x + BIRD_R, bird.y, 7, '#00ffff', 3, 0.35);
                     }
                 });
-
-                // Ground scroll
                 groundOffset -= speed;
                 if (groundOffset < -W) groundOffset += W;
-
-                // Collisions
                 if (checkCollisions()) endGame();
                 break;
-
             case STATE.OVER:
                 const gy = H - GROUND_H;
                 if (bird.y + BIRD_R < gy) {
@@ -805,66 +752,43 @@
 
     function render() {
         ctx.clearRect(0, 0, W, H);
-
-        let sx = 0,
-            sy = 0;
-        if (shakeMag > 0) {
-            sx = (Math.random() - 0.5) * shakeMag * 2;
-            sy = (Math.random() - 0.5) * shakeMag * 2;
-        }
-
+        let sx = 0, sy = 0;
+        if (shakeMag > 0) { sx = (Math.random() - 0.5) * shakeMag * 2; sy = (Math.random() - 0.5) * shakeMag * 2; }
         ctx.save();
         ctx.translate(sx, sy);
-
         drawSky();
-        drawClouds();
-
-        // Pipes
-        pipes.forEach(p => {
-            if (p.x + p.width > -30 && p.x < W + 30) drawPipe(p);
-        });
-
+        drawCity();
+        pipes.forEach(p => { if (p.x + p.width > -30 && p.x < W + 30) drawPipe(p); });
         drawGround();
         drawParticles();
         drawBird();
-
         ctx.restore();
-
-        // Flash
-        if (flashAlpha > 0) {
-            ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
-            ctx.fillRect(0, 0, W, H);
-        }
-
-        // UI
+        if (flashAlpha > 0) { ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`; ctx.fillRect(0, 0, W, H); }
         if (gameMode === STATE.PRE) drawStartScreen();
         if (gameMode === STATE.OVER) drawOverlay();
     }
 
-    function gameLoop(timestamp) {
-        let dt = (timestamp - lastTime) / 16.667;
+    function gameLoop(ts) {
+        let dt = (ts - lastTime) / 16.667;
         if (dt <= 0) dt = 0.016;
         if (dt > 3.5) dt = 3.5;
-        lastTime = timestamp;
-
+        lastTime = ts;
         update(dt);
         render();
         requestAnimationFrame(gameLoop);
     }
 
-    // ──────────────────────────────────────
-    // Init
-    // ──────────────────────────────────────
     function init() {
         resize();
         updateDimensions();
         resetBird();
         resetPipes();
-        generateClouds();
+        generateCity();
         particles = [];
         score = 0;
         gameMode = STATE.PRE;
         groundOffset = 0;
+        cityScrollOffset = 0;
         shakeMag = 0;
         flashAlpha = 0;
         timeOver = null;
@@ -874,7 +798,6 @@
 
     init();
     requestAnimationFrame(gameLoop);
-
-    console.log('🐦 Flappy Bird • Modern Edition ready');
-    console.log('   Screen:', Math.round(W) + '×' + Math.round(H), '@' + DPR + 'x');
+    console.log('🐦 Flappy Bird • Cyberpunk City Edition');
+    console.log('   Look for ABDULLAH BIN FAHAD on buildings after score 3!');
 })();
