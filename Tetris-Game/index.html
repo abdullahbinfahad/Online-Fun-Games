@@ -28,19 +28,19 @@
         }
         .board-container {
             position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+            width:100%; height:100%; /* fill the space */
         }
         canvas#gameCanvas {
             display:block; border:2px solid rgba(255,255,255,0.2); border-radius:8px;
             box-shadow:0 0 30px rgba(100,100,255,0.3); background:#0d0d20;
         }
 
-        /* Blur overlay for pause */
+        /* Full‑screen blur overlay for pause */
         .pause-blur {
-            position:absolute; top:0; left:0; width:100%; height:100%;
+            position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
             -webkit-backdrop-filter:blur(8px);
             z-index:12; display:none; pointer-events:none;
-            border-radius: 8px;
         }
 
         /* Desktop side panel (unchanged) */
@@ -90,9 +90,9 @@
             text-transform:uppercase; pointer-events:auto; display:none;
         }
 
-        /* Big centered action button */
+        /* Big centered action button (start/resume) */
         .big-action-btn {
-            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
             padding:16px 32px; font-size:clamp(18px,4vw,28px); font-weight:700; letter-spacing:2px;
             border:none; border-radius:16px; cursor:pointer; background:var(--neon-green); color:#000;
             box-shadow:0 0 25px rgba(57,255,20,0.6); text-transform:uppercase;
@@ -114,7 +114,7 @@
         }
         .action-btn:active { background:rgba(255,255,255,0.35); transform:scale(0.9); border-color:var(--neon-cyan); box-shadow:0 0 15px rgba(0,229,255,0.5); }
         .soft-btn::after { content:'↓'; font-size:24px; }
-        .hard-btn::after { content:'🔥↓'; font-size:20px; }
+        .hard-btn::after { content:'⏬💥'; font-size:18px; }
 
         /* Overlay messages */
         .special-overlay {
@@ -174,7 +174,6 @@
                 <div class="mobile-next"><canvas id="nextCanvasMobile" width="60" height="40"></canvas></div>
                 <button class="mobile-pause-btn" id="mobilePauseBtn">Pause</button>
                 <button class="big-action-btn" id="bigActionBtn">Start</button>
-                <!-- New action buttons row under stats/next -->
                 <div class="action-btns-row">
                     <div class="action-btn soft-btn" id="softDropBtn" title="Soft drop"></div>
                     <div class="action-btn hard-btn" id="hardDropBtn" title="Hard drop"></div>
@@ -223,7 +222,7 @@
             function sfxLevelUp() { playBeep(800,0.1,'triangle',0.12); setTimeout(()=>playBeep(1000,0.1,'triangle',0.12),100); }
             function sfxGameOver() { playBeep(200,0.3,'sawtooth',0.2); playBeep(150,0.4,'sawtooth',0.18); }
 
-            // ===================== CANVAS & RESPONSIVE =====================
+            // ===================== CANVAS & RESPONSIVE (no left/right gaps) =====================
             const gameCanvas = document.getElementById('gameCanvas');
             const gameCtx = gameCanvas.getContext('2d');
             const nextCanvas = document.getElementById('nextCanvas');
@@ -237,35 +236,19 @@
 
             function calcCellSize() {
                 const isMobile = window.innerWidth < 769;
-                if (isMobile) {
-                    const maxW = window.innerWidth;
-                    const maxH = window.innerHeight;
-                    const fromH = Math.floor(maxH / ROWS);
-                    const fromW = Math.floor(maxW / COLS);
-                    CELL_SIZE = Math.min(fromH, fromW);
-                    boardWidth = CELL_SIZE * COLS;
-                    boardHeight = CELL_SIZE * ROWS;
-                    gameCanvas.width = maxW;
-                    gameCanvas.height = maxH;
-                    gameCanvas.style.width = maxW + 'px';
-                    gameCanvas.style.height = maxH + 'px';
-                    boardOffsetX = (maxW - boardWidth) / 2;
-                    boardOffsetY = (maxH - boardHeight) / 2;
-                } else {
-                    const maxH = window.innerHeight * 0.85;
-                    const maxW = window.innerWidth * 0.55;
-                    const fromH = Math.floor(maxH / ROWS);
-                    const fromW = Math.floor(maxW / COLS);
-                    CELL_SIZE = Math.max(20, Math.min(38, Math.min(fromH, fromW)));
-                    boardWidth = CELL_SIZE * COLS;
-                    boardHeight = CELL_SIZE * ROWS;
-                    gameCanvas.width = boardWidth;
-                    gameCanvas.height = boardHeight;
-                    gameCanvas.style.width = boardWidth + 'px';
-                    gameCanvas.style.height = boardHeight + 'px';
-                    boardOffsetX = 0;
-                    boardOffsetY = 0;
-                }
+                const canvasWidth = isMobile ? window.innerWidth : window.innerWidth * 0.55;
+                const canvasHeight = isMobile ? window.innerHeight : window.innerHeight * 0.85;
+                gameCanvas.width = canvasWidth;
+                gameCanvas.height = canvasHeight;
+                gameCanvas.style.width = canvasWidth + 'px';
+                gameCanvas.style.height = canvasHeight + 'px';
+
+                // To eliminate left/right gaps, use full width for the board
+                CELL_SIZE = canvasWidth / COLS;
+                boardWidth = canvasWidth;
+                boardHeight = CELL_SIZE * ROWS;
+                boardOffsetX = 0;
+                boardOffsetY = (canvasHeight - boardHeight) / 2; // center vertically
             }
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
@@ -558,7 +541,6 @@
                     gameCtx.arc(p.x, p.y, p.r*(0.5+alpha*0.5),0,Math.PI*2);
                     gameCtx.fill();
                 });
-                // Removed PAUSED text – blur overlay handles it
                 gameCtx.restore();
             }
             function drawNextPiece(ctx, canvasW, canvasH) {
