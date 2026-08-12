@@ -28,7 +28,6 @@
         }
         .board-container {
             position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0;
-            width:100%; height:100%;
         }
         canvas#gameCanvas {
             display:block; border:2px solid rgba(255,255,255,0.2); border-radius:8px;
@@ -54,7 +53,7 @@
         }
         .big-action-btn:active { transform:translate(-50%,-50%) scale(0.95); }
 
-        /* Desktop side panel (unchanged) */
+        /* Desktop side panel */
         .info-panel {
             display:flex; flex-direction:column; gap:clamp(8px,1.5vw,16px);
             background:#111122; border-radius:12px; padding:clamp(10px,2vw,20px);
@@ -144,7 +143,7 @@
             .game-wrapper { padding:0; gap:0; }
             .info-panel { display:none; }
             .board-container { width:100vw; height:100vh; position:fixed; top:0; left:0; }
-            canvas#gameCanvas { border:none; border-radius:0; width:100%; height:100%; }
+            canvas#gameCanvas { border:none; border-radius:0; }
             .mobile-overlay { display:block; }
             .mobile-pause-btn { display:none; } /* shown by JS */
             .pause-blur { border-radius:0; }
@@ -192,7 +191,7 @@
         </div>
     </div>
 
-    <!-- Resume/Start button moved outside the board to prevent blurring -->
+    <!-- Resume/Start button outside the board to avoid blurring -->
     <button class="big-action-btn" id="bigActionBtn">Start</button>
 
     <script>
@@ -224,7 +223,7 @@
             function sfxLevelUp() { playBeep(800,0.1,'triangle',0.12); setTimeout(()=>playBeep(1000,0.1,'triangle',0.12),100); }
             function sfxGameOver() { playBeep(200,0.3,'sawtooth',0.2); playBeep(150,0.4,'sawtooth',0.18); }
 
-            // ===================== CANVAS & RESPONSIVE (no left/right gaps) =====================
+            // ===================== CANVAS & RESPONSIVE (full‑screen mobile, normal desktop) =====================
             const gameCanvas = document.getElementById('gameCanvas');
             const gameCtx = gameCanvas.getContext('2d');
             const nextCanvas = document.getElementById('nextCanvas');
@@ -235,22 +234,45 @@
             const COLS = 10, ROWS = 20;
             let CELL_SIZE, boardWidth, boardHeight;
             let boardOffsetX = 0, boardOffsetY = 0;
+            let isMobile = window.innerWidth < 769;
 
             function calcCellSize() {
-                const isMobile = window.innerWidth < 769;
-                const canvasWidth = isMobile ? window.innerWidth : window.innerWidth * 0.55;
-                const canvasHeight = isMobile ? window.innerHeight : window.innerHeight * 0.85;
-                gameCanvas.width = canvasWidth;
-                gameCanvas.height = canvasHeight;
-                gameCanvas.style.width = canvasWidth + 'px';
-                gameCanvas.style.height = canvasHeight + 'px';
+                isMobile = window.innerWidth < 769;
+                if (isMobile) {
+                    // Use clientWidth/Height to avoid address bar issues
+                    const canvasWidth = document.documentElement.clientWidth;
+                    const canvasHeight = document.documentElement.clientHeight;
+                    gameCanvas.width = canvasWidth;
+                    gameCanvas.height = canvasHeight;
+                    gameCanvas.style.width = canvasWidth + 'px';
+                    gameCanvas.style.height = canvasHeight + 'px';
 
-                CELL_SIZE = canvasWidth / COLS;
-                boardWidth = canvasWidth;
-                boardHeight = CELL_SIZE * ROWS;
-                boardOffsetX = 0;
-                // Push board down enough to clear top HUD (min 100px)
-                boardOffsetY = Math.max(100, (canvasHeight - boardHeight) / 2);
+                    const topOffset = 60; // leave space for HUD stats (they are overlaid)
+                    const maxCellFromWidth = canvasWidth / COLS;
+                    const maxCellFromHeight = (canvasHeight - topOffset) / ROWS;
+                    CELL_SIZE = Math.min(maxCellFromWidth, maxCellFromHeight);
+                    boardWidth = CELL_SIZE * COLS;
+                    boardHeight = CELL_SIZE * ROWS;
+                    boardOffsetX = (canvasWidth - boardWidth) / 2;
+                    // Center vertically in the area below topOffset
+                    boardOffsetY = topOffset + (canvasHeight - topOffset - boardHeight) / 2;
+                } else {
+                    // Desktop layout (restored)
+                    const canvasWidth = window.innerWidth * 0.55;
+                    const canvasHeight = window.innerHeight * 0.85;
+                    gameCanvas.width = canvasWidth;
+                    gameCanvas.height = canvasHeight;
+                    gameCanvas.style.width = canvasWidth + 'px';
+                    gameCanvas.style.height = canvasHeight + 'px';
+
+                    const fromH = Math.floor(canvasHeight / ROWS);
+                    const fromW = Math.floor(canvasWidth / COLS);
+                    CELL_SIZE = Math.max(20, Math.min(38, Math.min(fromH, fromW)));
+                    boardWidth = CELL_SIZE * COLS;
+                    boardHeight = CELL_SIZE * ROWS;
+                    boardOffsetX = (canvasWidth - boardWidth) / 2;
+                    boardOffsetY = (canvasHeight - boardHeight) / 2;
+                }
             }
             calcCellSize();
             window.addEventListener('resize', () => { calcCellSize(); drawBoard(); });
@@ -466,7 +488,7 @@
             // ===================== LONG PRESS BY ZONE =====================
             let longPressTimer = null;
             let repeatInterval = null;
-            let currentZone = null; // 'left', 'middle', 'right'
+            let currentZone = null;
 
             function stopLongPress() {
                 if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
