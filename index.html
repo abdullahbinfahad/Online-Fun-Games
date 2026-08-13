@@ -107,6 +107,7 @@
             -webkit-text-fill-color: transparent;
             animation: gradientMove 6s ease-in-out infinite;
             text-shadow: 0 0 40px rgba(255, 0, 0, 0.4);
+            line-height: 1.2;
         }
         @keyframes gradientMove {
             0% {
@@ -451,7 +452,22 @@
             height: 1rem;
         }
 
+        /* ===== MOBILE TWEAKS ===== */
         @media (max-width: 768px) {
+            /* Header: two lines with smaller font */
+            .header {
+                padding: 3rem 1rem 2.5rem;
+            }
+            .header h1 {
+                font-size: clamp(1.6rem, 7vw, 2.4rem);
+                line-height: 1.2;
+            }
+            .header p {
+                font-size: 0.7rem;
+                letter-spacing: 1px;
+                margin-top: 0.3rem;
+            }
+
             .game-grid {
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
                 gap: 1rem;
@@ -485,6 +501,7 @@
                 margin-top: 2rem;
             }
         }
+
         .img-placeholder {
             display: flex;
             align-items: center;
@@ -557,81 +574,181 @@
             setTimeout(() => document.getElementById('loader').classList.add('hidden'), 300);
         });
 
-        // --- GAME DATA WITH DIRECT WEB IMAGES ---
-        const gamesData = [
-            { name: "Laser Archery Challenge", folder: "Archery-Game", cat: "Action",
-                img: "https://static.vecteezy.com/system/resources/thumbnails/002/538/807/small/happy-character-playing-archery-game-vector.jpg" },
-            { name: "Neon Pong Master", folder: "Ping-Pong-Game", cat: "Action",
-                img: "https://t3.ftcdn.net/jpg/13/80/99/62/360_F_1380996291_jEE9ieZHHm8DPjvVjDgV5Alvg5WWmkY5.jpg" },
-            { name: "Fruit Ninja Blitz", folder: "Fruit-Slicer-Game", cat: "Action",
-                img: "https://www.coolmathgames.com/sites/default/files/styles/mobile_game_image/public/FruitNinja_OG-Logo.jpg.webp?itok=p9HjDBpn" },
-            { name: "Mole Whackdown Extreme", folder: "Whack-A-Mole-Game", cat: "Action",
-                img: "https://m.media-amazon.com/images/I/81kK1bQU9TL.jpg", phone: true },
-
-            { name: "Candy Crush Saga X", folder: "Candy-Crush-Game", cat: "Puzzle",
-                img: "https://i.pinimg.com/originals/71/d6/45/71d645fd24bcd94c5cd09a77a24bdfd5.jpg" },
-            { name: "Minefield Survival Pro", folder: "Minesweeper-Game", cat: "Puzzle",
-                img: "https://thumbs.dreamstime.com/b/mine-146336339.jpg", phone: true },
-            { name: "Tetris Quantum", folder: "Tetris-Game", cat: "Puzzle",
-                img: "https://img.freepik.com/premium-vector/brick-retro-tetris-game_79145-60.jpg?semt=ais_items_boosted&w=740" },
-            { name: "2048 Infinity", folder: "2048-Game", cat: "Puzzle",
-                img: "https://www.bestgames.com/cdn-cgi/image/quality=78,format=auto/thumb/Chain-Disk-2048.jpg", phone: true },
-
-            { name: "Neon Snake Xtreme", folder: "Snake-Game", cat: "Arcade",
-                img: "https://www.shutterstock.com/image-vector/nokias-classic-snake-mobile-game-260nw-2391933343.jpg",
-                phone: true },
-            { name: "Laser Breakout", folder: "Breakout-Game", cat: "Arcade", badge: "HOT",
-                img: "https://www.coolmathgames.com/sites/default/files/2022-11/Arcade%20Games%20Atari%20Breakout%20Gameplay.gif" },
-            { name: "Flappy Bird Reloaded", folder: "Flappy-Bird-Game", cat: "Arcade",
-                img: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlnaWxxM3V5bnl6NmRibHl0b2RiYzltN2R5NzlvbnE4M29vd2xjZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/euuaA2cwLEUuI/200.gif",
-                phone: true },
-            { name: "Cyber Road Crossing", folder: "Crossy-Road-Game", cat: "Arcade", badge: "HOT",
-                img: "https://media.tenor.com/RCVH4SPD2WoAAAAM/crossing-road-jumping-chicken.gif", phone: true },
-
-            { name: "Memory Matrix Pro", folder: "Memory-Card-Game", cat: "Mind",
-                img: "https://i.pinimg.com/originals/00/78/ef/0078ef0c33bc4604b153707df2bcd8ac.jpg", phone: true },
-            { name: "Quantum Tic-Tac-Toe", folder: "Tic-Tac-Toe", cat: "Mind",
-                img: "https://media.istockphoto.com/id/670031790/vector/tic-tac-toe-painted-grunge-ink-blots-brush-texture-isolated-background-handmade-design.jpg?s=612x612&w=0&k=20&c=FsVCofCXIPx1erU36PZA7TzDyiwszUvvsA0hhlESuns=",
-                phone: true },
-            { name: "Connect 4 Championship", folder: "Connect-Four-Game", cat: "Mind",
-                img: "https://github.com/lukeg90/connect-four/raw/master/connect-four.gif", phone: true },
-            { name: "Simon's Neon Challenge", folder: "Simon-Says-Game", cat: "Mind", badge: "NEW",
-                img: "https://media.tenor.com/KPTI9TNVD-UAAAAM/sml-jeffy.gif" },
-            { name: "Cyber Chess Masters", folder: "Chess", cat: "Mind",
-                img: "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExOTlxN2d6Nng1bWhtZGlnNDczd3NuZmExZjg3djNkdzRzM2dvdnAxbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ePuFaLL6VnQcx1QBSD/giphy.gif" },
-
-            { name: "Sky Tower Builder", folder: "Tower-Blocks", cat: "Skill", badge: "HOT",
-                img: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTk4NzFkNGlyY2M4ZGttNzUybDBvejBoNDh3bTBpZ29jbXQxZmZldCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Cwf290yH98VbpeRqe0/giphy.gif",
-                phone: true },
-            { name: "Neon Labyrinth", folder: "Tilting-Maze-Game", cat: "Skill",
-                img: "https://codetap.org/storage/projects/tilting-maze-game.png" },
-            { name: "Bug Zapper Pro", folder: "Insect-Catch-Game", cat: "Skill",
-                img: "https://codetap.org/storage/projects/insect-catch-game.png", phone: true },
-            { name: "Shape Shifter Challenge", folder: "Shape-Clicker-Game", cat: "Skill",
-                img: "https://img.itch.zone/aW1hZ2UvMzU0MDkxNS8yMTA4NzQ2Ni5wbmc=/347x500/hg6g4D.png", phone: true },
-
-            { name: "Hangman Ultimate", folder: "Hangman-Game", cat: "Word",
-                img: "https://www.wordgames.org/wp-content/uploads/2023/06/00db99bb5c4846a4bfc1e3ef103b41be-512x384.jpeg" },
-            { name: "Typing Dojo Master", folder: "Typing-Game", cat: "Word",
-                img: "https://gifdb.com/images/thumbnail/nerd-ginger-cat-typing-8308pf65yrgevcln.gif" },
-            { name: "Speed Typing Showdown", folder: "Speed-Typing-Game", cat: "Word",
-                img: "https://media.tenor.com/LfB55ppLnUoAAAAM/typing.gif" },
-            { name: "Guess Number Ninja", folder: "Type-Number-Guessing-Game", cat: "Word", badge: "BEST",
-                img: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExcGtvdmhwb2ZnNnJzbnN4MWdlazh0ZTlxd284NXl6dTY2dHE2am56cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/JdFEeta1hLNnO/giphy.gif",
-                phone: true },
-
-            { name: "Rock Paper Scissors Royale", folder: "Rock-Paper-Scissors", cat: "Casual",
-                img: "https://gifdb.com/images/high/animated-guy-playing-rock-paper-scissors-with-big-hand-bafje8p8taqsiavy.gif" },
-            { name: "Dice King Challenge", folder: "Dice-Roll-Simulator", cat: "Casual",
-                img: "https://media.tenor.com/sUiwSBs8S6QAAAAm/dice-game.webp", phone: true },
-            { name: "Emoji Blitz Catcher", folder: "Emoji-Catcher-Game", cat: "Casual", badge: "NEW",
-                img: "https://media.tenor.com/1kytRQvIpmcAAAAm/cowboy-cowboy-sad.webp" },
-            { name: "Trivia Mastermind", folder: "Quiz-Game", cat: "Casual",
-                img: "https://media.gettyimages.com/id/165768645/vector/thinking-doodles.jpg?s=612x612&w=0&k=20&c=vsJMwrZY29JjkEoA4udy5bPg708p45Rcy_rrLHCB_Vw=",
-                phone: true },
-            { name: "Speak Number Guess", folder: "Speak-Number-Guessing-Game", cat: "Casual",
-                img: "https://i.pinimg.com/originals/99/d9/23/99d9239aafdc5dd180eeae9bc30dcc6a.jpg", phone: true }
-        ];
+        // --- GAME DATA — Tetris Quantum & Fluffy Bird are now FIRST ---
+        const gamesData = [{
+            name: "Tetris Quantum",
+            folder: "Tetris-Game",
+            cat: "Puzzle",
+            img: "https://img.freepik.com/premium-vector/brick-retro-tetris-game_79145-60.jpg?semt=ais_items_boosted&w=740",
+            phone: true
+        }, {
+            name: "Fluffy Bird",
+            folder: "Flappy-Bird-Game",
+            cat: "Arcade",
+            img: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjlnaWxxM3V5bnl6NmRibHl0b2RiYzltN2R5NzlvbnE4M29vd2xjZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/euuaA2cwLEUuI/200.gif",
+            phone: true
+        }, {
+            name: "Laser Archery Challenge",
+            folder: "Archery-Game",
+            cat: "Action",
+            img: "https://static.vecteezy.com/system/resources/thumbnails/002/538/807/small/happy-character-playing-archery-game-vector.jpg"
+        }, {
+            name: "Neon Pong Master",
+            folder: "Ping-Pong-Game",
+            cat: "Action",
+            img: "https://t3.ftcdn.net/jpg/13/80/99/62/360_F_1380996291_jEE9ieZHHm8DPjvVjDgV5Alvg5WWmkY5.jpg"
+        }, {
+            name: "Fruit Ninja Blitz",
+            folder: "Fruit-Slicer-Game",
+            cat: "Action",
+            img: "https://www.coolmathgames.com/sites/default/files/styles/mobile_game_image/public/FruitNinja_OG-Logo.jpg.webp?itok=p9HjDBpn"
+        }, {
+            name: "Mole Whackdown Extreme",
+            folder: "Whack-A-Mole-Game",
+            cat: "Action",
+            img: "https://m.media-amazon.com/images/I/81kK1bQU9TL.jpg",
+            phone: true
+        }, {
+            name: "Candy Crush Saga X",
+            folder: "Candy-Crush-Game",
+            cat: "Puzzle",
+            img: "https://i.pinimg.com/originals/71/d6/45/71d645fd24bcd94c5cd09a77a24bdfd5.jpg"
+        }, {
+            name: "Minefield Survival Pro",
+            folder: "Minesweeper-Game",
+            cat: "Puzzle",
+            img: "https://thumbs.dreamstime.com/b/mine-146336339.jpg",
+            phone: true
+        }, {
+            name: "2048 Infinity",
+            folder: "2048-Game",
+            cat: "Puzzle",
+            img: "https://www.bestgames.com/cdn-cgi/image/quality=78,format=auto/thumb/Chain-Disk-2048.jpg",
+            phone: true
+        }, {
+            name: "Neon Snake Xtreme",
+            folder: "Snake-Game",
+            cat: "Arcade",
+            img: "https://www.shutterstock.com/image-vector/nokias-classic-snake-mobile-game-260nw-2391933343.jpg",
+            phone: true
+        }, {
+            name: "Laser Breakout",
+            folder: "Breakout-Game",
+            cat: "Arcade",
+            badge: "HOT",
+            img: "https://www.coolmathgames.com/sites/default/files/2022-11/Arcade%20Games%20Atari%20Breakout%20Gameplay.gif"
+        }, {
+            name: "Cyber Road Crossing",
+            folder: "Crossy-Road-Game",
+            cat: "Arcade",
+            badge: "HOT",
+            img: "https://media.tenor.com/RCVH4SPD2WoAAAAM/crossing-road-jumping-chicken.gif",
+            phone: true
+        }, {
+            name: "Memory Matrix Pro",
+            folder: "Memory-Card-Game",
+            cat: "Mind",
+            img: "https://i.pinimg.com/originals/00/78/ef/0078ef0c33bc4604b153707df2bcd8ac.jpg",
+            phone: true
+        }, {
+            name: "Quantum Tic-Tac-Toe",
+            folder: "Tic-Tac-Toe",
+            cat: "Mind",
+            img: "https://media.istockphoto.com/id/670031790/vector/tic-tac-toe-painted-grunge-ink-blots-brush-texture-isolated-background-handmade-design.jpg?s=612x612&w=0&k=20&c=FsVCofCXIPx1erU36PZA7TzDyiwszUvvsA0hhlESuns=",
+            phone: true
+        }, {
+            name: "Connect 4 Championship",
+            folder: "Connect-Four-Game",
+            cat: "Mind",
+            img: "https://github.com/lukeg90/connect-four/raw/master/connect-four.gif",
+            phone: true
+        }, {
+            name: "Simon's Neon Challenge",
+            folder: "Simon-Says-Game",
+            cat: "Mind",
+            badge: "NEW",
+            img: "https://media.tenor.com/KPTI9TNVD-UAAAAM/sml-jeffy.gif"
+        }, {
+            name: "Cyber Chess Masters",
+            folder: "Chess",
+            cat: "Mind",
+            img: "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExOTlxN2d6Nng1bWhtZGlnNDczd3NuZmExZjg3djNkdzRzM2dvdnAxbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ePuFaLL6VnQcx1QBSD/giphy.gif"
+        }, {
+            name: "Sky Tower Builder",
+            folder: "Tower-Blocks",
+            cat: "Skill",
+            badge: "HOT",
+            img: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTk4NzFkNGlyY2M4ZGttNzUybDBvejBoNDh3bTBpZ29jbXQxZmZldCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Cwf290yH98VbpeRqe0/giphy.gif",
+            phone: true
+        }, {
+            name: "Neon Labyrinth",
+            folder: "Tilting-Maze-Game",
+            cat: "Skill",
+            img: "https://codetap.org/storage/projects/tilting-maze-game.png"
+        }, {
+            name: "Bug Zapper Pro",
+            folder: "Insect-Catch-Game",
+            cat: "Skill",
+            img: "https://codetap.org/storage/projects/insect-catch-game.png",
+            phone: true
+        }, {
+            name: "Shape Shifter Challenge",
+            folder: "Shape-Clicker-Game",
+            cat: "Skill",
+            img: "https://img.itch.zone/aW1hZ2UvMzU0MDkxNS8yMTA4NzQ2Ni5wbmc=/347x500/hg6g4D.png",
+            phone: true
+        }, {
+            name: "Hangman Ultimate",
+            folder: "Hangman-Game",
+            cat: "Word",
+            img: "https://www.wordgames.org/wp-content/uploads/2023/06/00db99bb5c4846a4bfc1e3ef103b41be-512x384.jpeg"
+        }, {
+            name: "Typing Dojo Master",
+            folder: "Typing-Game",
+            cat: "Word",
+            img: "https://gifdb.com/images/thumbnail/nerd-ginger-cat-typing-8308pf65yrgevcln.gif"
+        }, {
+            name: "Speed Typing Showdown",
+            folder: "Speed-Typing-Game",
+            cat: "Word",
+            img: "https://media.tenor.com/LfB55ppLnUoAAAAM/typing.gif"
+        }, {
+            name: "Guess Number Ninja",
+            folder: "Type-Number-Guessing-Game",
+            cat: "Word",
+            badge: "BEST",
+            img: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExcGtvdmhwb2ZnNnJzbnN4MWdlazh0ZTlxd284NXl6dTY2dHE2am56cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/JdFEeta1hLNnO/giphy.gif",
+            phone: true
+        }, {
+            name: "Rock Paper Scissors Royale",
+            folder: "Rock-Paper-Scissors",
+            cat: "Casual",
+            img: "https://gifdb.com/images/high/animated-guy-playing-rock-paper-scissors-with-big-hand-bafje8p8taqsiavy.gif"
+        }, {
+            name: "Dice King Challenge",
+            folder: "Dice-Roll-Simulator",
+            cat: "Casual",
+            img: "https://media.tenor.com/sUiwSBs8S6QAAAAm/dice-game.webp",
+            phone: true
+        }, {
+            name: "Emoji Blitz Catcher",
+            folder: "Emoji-Catcher-Game",
+            cat: "Casual",
+            badge: "NEW",
+            img: "https://media.tenor.com/1kytRQvIpmcAAAAm/cowboy-cowboy-sad.webp"
+        }, {
+            name: "Trivia Mastermind",
+            folder: "Quiz-Game",
+            cat: "Casual",
+            img: "https://media.gettyimages.com/id/165768645/vector/thinking-doodles.jpg?s=612x612&w=0&k=20&c=vsJMwrZY29JjkEoA4udy5bPg708p45Rcy_rrLHCB_Vw=",
+            phone: true
+        }, {
+            name: "Speak Number Guess",
+            folder: "Speak-Number-Guessing-Game",
+            cat: "Casual",
+            img: "https://i.pinimg.com/originals/99/d9/23/99d9239aafdc5dd180eeae9bc30dcc6a.jpg",
+            phone: true
+        }];
 
         const grid = document.getElementById('gameGrid');
         const searchInput = document.getElementById('searchInput');
