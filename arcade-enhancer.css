@@ -1,0 +1,29 @@
+/* Arcade Evolution layer — shared, lightweight, full-viewport game chrome */
+:root { --ae-cyan:#7df9ff; --ae-violet:#a78bfa; --ae-pink:#fb7185; --ae-ink:#08111f; --ae-panel:rgba(8,17,31,.86); }
+html, body { min-height:100%; width:100%; }
+html { background:#050914; }
+body { margin:0; min-height:100svh; overflow-x:hidden; background-color:#050914; }
+body.ae-game-page { position:relative; isolation:isolate; }
+body.ae-game-page::before { content:""; position:fixed; inset:0; z-index:-2; pointer-events:none; background:radial-gradient(circle at 50% -10%,rgba(125,249,255,.16),transparent 43%),linear-gradient(135deg,rgba(6,15,32,.62),rgba(8,5,24,.72)); }
+body.ae-game-page::after { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.16; background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px); background-size:34px 34px; mask-image:linear-gradient(to bottom,black,transparent 90%); }
+body.ae-game-page canvas, body.ae-game-page svg { max-width:100%; touch-action:none; }
+.ae-hud { position:fixed; z-index:10000; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:min(1100px,calc(100% - 24px)); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border:1px solid rgba(125,249,255,.24); border-radius:18px; color:#eef7ff; font:600 12px/1.2 Inter,system-ui,sans-serif; background:var(--ae-panel); box-shadow:0 12px 40px rgba(0,0,0,.3),0 0 24px rgba(125,249,255,.1); backdrop-filter:blur(16px); }
+.ae-brand { display:flex; align-items:center; gap:8px; min-width:0; white-space:nowrap; }
+.ae-orb { width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,var(--ae-cyan),var(--ae-violet)); box-shadow:0 0 14px var(--ae-cyan); }
+.ae-title { overflow:hidden; text-overflow:ellipsis; max-width:22vw; letter-spacing:.08em; text-transform:uppercase; }
+.ae-stats { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; }
+.ae-stat { padding:7px 9px; border-radius:10px; background:rgba(255,255,255,.07); color:#cbd5e1; white-space:nowrap; }
+.ae-stat b { color:#fff; margin-left:3px; }
+.ae-actions { display:flex; gap:6px; }
+.ae-btn { cursor:pointer; border:1px solid rgba(255,255,255,.18); border-radius:10px; padding:7px 9px; color:#fff; background:rgba(255,255,255,.08); font:700 12px system-ui,sans-serif; }
+.ae-btn:hover,.ae-btn:focus-visible { border-color:var(--ae-cyan); background:rgba(125,249,255,.14); outline:none; }
+.ae-panel { position:fixed; z-index:10001; top:76px; right:12px; width:min(340px,calc(100% - 24px)); padding:18px; border:1px solid rgba(167,139,250,.38); border-radius:18px; color:#dbeafe; background:rgba(8,17,31,.95); box-shadow:0 18px 60px rgba(0,0,0,.48); font:14px/1.55 system-ui,sans-serif; transform:translateY(-10px) scale(.98); opacity:0; pointer-events:none; transition:.2s ease; }
+.ae-panel.open { transform:none; opacity:1; pointer-events:auto; }
+.ae-panel h2 { margin:0 0 8px; font:800 18px/1.2 system-ui,sans-serif; color:#fff; }
+.ae-panel p { margin:7px 0; color:#b7c6dc; }
+.ae-panel .ae-reward { margin-top:12px; padding:10px; border-radius:12px; color:#fde68a; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.2); }
+.ae-toast { position:fixed; z-index:10002; left:50%; bottom:24px; transform:translate(-50%,20px); opacity:0; pointer-events:none; padding:11px 16px; border-radius:999px; color:#fff; background:linear-gradient(90deg,#0f766e,#4f46e5); font:700 13px system-ui,sans-serif; box-shadow:0 10px 30px rgba(0,0,0,.3); transition:.25s ease; }
+.ae-toast.show { opacity:1; transform:translate(-50%,0); }
+.ae-guide { position:fixed; z-index:9999; left:50%; bottom:max(12px,env(safe-area-inset-bottom)); transform:translateX(-50%); color:rgba(226,232,240,.65); font:11px system-ui,sans-serif; pointer-events:none; text-align:center; }
+@media (max-width:640px) { .ae-hud { width:calc(100% - 14px); padding:7px; gap:5px; border-radius:14px; } .ae-title { display:none; } .ae-stats { gap:4px; } .ae-stat { padding:6px 7px; font-size:11px; } .ae-actions .ae-btn { padding:7px; font-size:11px; } .ae-actions .ae-btn span { display:none; } .ae-guide { bottom:8px; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
