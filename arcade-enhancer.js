@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const key = `arcade-evolution:${location.pathname}`;
-  const folder = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0] || 'arcade';
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const folder = pathParts[0] || 'arcade';
   const title = (document.title || folder).replace(/\s*[|–-].*$/, '').trim();
   const stories = {
     '2048-Game':'In the Infinity Vault, every merge powers a dormant starship. Reach new sectors by chaining perfect tiles.',

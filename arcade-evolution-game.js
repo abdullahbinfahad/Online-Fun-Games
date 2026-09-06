@@ -1,0 +1,85 @@
+/* Arcade Evolution Mode: a new playable layer, with a Classic toggle for preservation. */
+(() => {
+  'use strict';
+  const excluded = new Set(['Tetris-Game','Flappy-Bird-Game','Crossy-Road-Game']);
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const folder = pathParts[0] || '';
+  if (excluded.has(folder)) return;
+  const config = {
+    '2048-Game':['Infinity Merge','merge','Combine quantum tiles to charge the starship.','#22d3ee'],
+    'Candy-Crush-Game':['Sugar Nebula','merge','Chain sweet cores before the nebula cools.','#f472b6'],
+    'Memory-Card-Game':['Memory Matrix','memory','Restore the missing pattern from the fractured city.','#a78bfa'],
+    'Minesweeper-Game':['Moonbase Signal','strategy','Read the grid and secure safe landing zones.','#60a5fa'],
+    'Connect-Four-Game':['Gravity Grid','strategy','Connect the four power nodes before the rival AI.','#f59e0b'],
+    'Chess':['Quantum Tactics','strategy','Outsmart the guardian protocol in a tactical grid.','#f8fafc'],
+    'Tic-Tac-Toe':['Constellation Clash','strategy','Claim three stars and open the next dimension.','#fb7185'],
+    'Simon-Says-Game':['Echo Temple','rhythm','Repeat the growing pulse sequence.','#c084fc'],
+    'Quiz-Game':['Knowledge Gate','quiz','Answer fast to unlock the archive.','#34d399'],
+    'Hangman-Game':['Lost Archive','typing','Decode the secret word before the signal fades.','#fbbf24'],
+    'Typing-Game':['Cyber Dojo','typing','Type the live transmission with perfect rhythm.','#2dd4bf'],
+    'Speed-Typing-Game':['Data Storm','typing','Outrun the storm one word at a time.','#38bdf8'],
+    'Type-Number-Guessing-Game':['Cipher Engine','quiz','Crack the hidden key with fewer attempts.','#facc15'],
+    'Speak-Number-Guessing-Game':['Voice Console','quiz','Use your voice or tap the correct range.','#fb923c'],
+    'Archery-Game':['Aurora Range','aim','Draw, aim, and strike the moving beacon.','#84cc16'],
+    'Fruit-Slicer-Game':['Portal Kitchen','aim','Slice the glowing fruit cores and avoid the void bombs.','#fb7185'],
+    'Insect-Catch-Game':['Bio Garden','aim','Catch rare fireflies while the garden is awake.','#4ade80'],
+    'Whack-A-Mole-Game':['Tunnel Defense','aim','Defend the garden from a rapid underground swarm.','#f97316'],
+    'Breakout-Game':['Crystal Firewall','breakout','Bounce the pulse and fracture every shield.','#818cf8'],
+    'Ping-Pong-Game':['Zero-G League','pong','Return the orbital serve and control the arena.','#22d3ee'],
+    'Snake-Game':['Signal Serpent','runner','Grow through the living circuit without touching the edge.','#39ff14'],
+    'Tower-Blocks':['Skyline Protocol','tower','Drop perfect blocks and build above the storm.','#f59e0b'],
+    'Tilting-Maze-Game':['Reactor Labyrinth','runner','Guide the core through a shifting reactor maze.','#f97316'],
+    'Shape-Clicker-Game':['Prism Lab','aim','Match the target shape before the prism shifts.','#e879f9'],
+    'Corona-Virus-Shotting':['Micro City Shield','aim','Protect the city shield through escalating waves.','#38bdf8'],
+    'Dice-Roll-Simulator':['Fortune Vault','dice','Roll, choose a risk, and chase the rare relic.','#fbbf24'],
+    'Rock-Paper-Scissors':['Triad Arena','arena','Read the rival and win the relic round.','#f472b6'],
+    'Emoji-Catcher-Game':['Memory Rain','aim','Catch the rare icons before they dissolve.','#facc15'],
+    'Typing-Game~':['Neon Scribe','typing','Keep your combo alive through the transmission.','#67e8f9']
+  };
+  const [name, mode, mission, accent] = config[folder] || ['Arcade Evolution','runner','Enter the endless mission.','#22d3ee'];
+  const original = [...document.body.children].filter(el => !el.classList.contains('ae-hud') && !el.classList.contains('ae-panel') && !el.classList.contains('ae-toast') && !el.classList.contains('ae-guide'));
+  const stage = document.createElement('main'); stage.id='ae-evolution-stage'; stage.innerHTML=`<div class="ae-evo-head"><div><span class="ae-evo-kicker">EVOLUTION MODE · SEASON ∞</span><h1>${name}</h1><p>${mission}</p></div><div class="ae-evo-head-actions"><button class="ae-evo-btn" id="ae-kit">KIT: PRISM</button><button class="ae-evo-btn" id="ae-classic">CLASSIC</button></div></div><div class="ae-evo-board"><canvas id="ae-evo-canvas" aria-label="${name} game canvas"></canvas><div class="ae-evo-center" id="ae-evo-center"></div></div><div class="ae-evo-controls"><button class="ae-evo-btn" id="ae-action">PLAY / TAP</button><span id="ae-evo-help">Keyboard, mouse, or touch supported</span><span class="ae-evo-level">MISSION <b id="ae-evo-round">01</b> · BEST <b id="ae-evo-best">0</b></span></div>`;
+  stage.style.setProperty('--ae-accent', accent); document.body.append(stage); document.body.classList.add('ae-new-mode-active');
+  original.forEach(el => { el.dataset.aeOriginalDisplay = el.style.display; el.style.display='none'; });
+  const canvas=stage.querySelector('canvas'), ctx=canvas.getContext('2d'); const center=stage.querySelector('#ae-evo-center');
+  let w=0,h=0,dpr=1, raf=0, last=0, score=0, round=1, best=Number(localStorage.getItem(`ae-best:${folder}`)||0), running=true, kit=0, keys={};
+  const kits=[['PRISM','#22d3ee'],['EMBER','#fb7185'],['AURORA','#a78bfa']];
+  stage.querySelector('#ae-evo-best').textContent=best;
+  const resize=()=>{const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);w=Math.max(300,r.width);h=Math.max(260,r.height);canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);};
+  const rr=(x,y,ww,hh,r=12)=>{ctx.beginPath();ctx.roundRect(x,y,ww,hh,r);};
+  const bg=()=>{const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#071427');g.addColorStop(1,'#11102c');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.strokeStyle='rgba(255,255,255,.055)';ctx.lineWidth=1;for(let x=0;x<w;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=0;y<h;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}};
+  const glow=(color=accent)=>{ctx.shadowColor=color;ctx.shadowBlur=18;}; const resetGlow=()=>{ctx.shadowBlur=0;};
+  const addScore=(n=10)=>{score+=n;best=Math.max(best,score);stage.querySelector('#ae-evo-best').textContent=best;window.ArcadeEvolution?.reward(n);};
+  const stars=(x,y,r,color)=>{ctx.fillStyle=color;glow(color);ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, q=i%2?r:r*.42;ctx.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}ctx.closePath();ctx.fill();resetGlow();};
+  const state={targets:[],player:{x:.2,y:.7},vx:0,vy:0,t:0,grid:[],selected:null,sequence:[],input:[],word:'',typed:'',paddle:.5,ball:{x:.5,y:.5,vx:.33,vy:.24},cells:[],fruit:[],tower:[]};
+  const rand=(i)=>((Math.sin(i*999+round*77)*43758.5453)%1+1)%1;
+  function newAim(){state.targets=Array.from({length:5},(_,i)=>({x:.16+rand(i)*.68,y:.22+rand(i+10)*.55,r:17+rand(i+20)*12,hit:false,life:3+rand(i+30)*3}));}
+  function newMemory(){state.grid=Array.from({length:12},(_,i)=>({x:i%4,y:Math.floor(i/4),v:Math.floor(i/2),open:false,matched:false}));state.grid.sort(()=>rand(Math.random()*1000)-.5);state.selected=null;setTimeout(()=>state.grid.forEach(c=>c.open=false),1300);state.grid.forEach(c=>c.open=true);}
+  function newMerge(){state.cells=Array.from({length:25},(_,i)=>({x:i%5,y:Math.floor(i/5),v:(i===12?2:rand(i)<.22?2:0)}));}
+  function newStrategy(){state.cells=Array.from({length:25},(_,i)=>({x:i%5,y:Math.floor(i/5),v:0,blocked:rand(i)<.22}));}
+  function newTyping(){const words=['NEBULA','VECTOR','PULSE','QUANTUM','AURORA','CIRCUIT','PHOTON','ORBIT'];state.word=words[Math.floor(rand(round)*words.length)];state.typed='';}
+  function newQuiz(){state.word=['NOVA','ORBIT','PRISM','FLUX'][Math.floor(rand(round)*4)];state.typed='';}
+  function reset(){score=0;round=1;state.t=0;state.player={x:.2,y:.7};state.ball={x:.5,y:.5,vx:.33,vy:.24};state.tower=[];state.input=[];state.fruit=[];if(mode==='aim')newAim();if(mode==='memory')newMemory();if(mode==='merge')newMerge();if(mode==='strategy')newStrategy();if(mode==='typing')newTyping();if(mode==='quiz'||mode==='dice')newQuiz();if(mode==='rhythm')state.sequence=[0,2,1,3];if(mode==='runner')state.player={x:.2,y:.7};if(mode==='arena')state.player={x:.5,y:.75};}
+  const text=(s,x,y,size=16,color='#cbd5e1',align='center')=>{ctx.font=`700 ${size}px Inter,system-ui,sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.fillText(s,x,y);};
+  function drawAim(){if(!state.targets.length)newAim();text('TAP THE BEACONS · AVOID THE VOID',w/2,34,12,'#94a3b8');state.targets.forEach((t,i)=>{if(t.hit)return;t.y+=Math.sin(state.t*2+i)*.0005;ctx.fillStyle='rgba(255,255,255,.06)';ctx.beginPath();ctx.arc(t.x*w,t.y*h,t.r+10,0,7);ctx.fill();glow(i%2?accent:kits[kit][1]);ctx.fillStyle=i%2?accent:kits[kit][1];ctx.beginPath();ctx.arc(t.x*w,t.y*h,t.r,0,7);ctx.fill();resetGlow();ctx.fillStyle='#08111f';ctx.beginPath();ctx.arc(t.x*w,t.y*h,t.r*.36,0,7);ctx.fill();});}
+  function drawMerge(){text('MERGE IDENTICAL CORES · BUILD THE SINGULARITY',w/2,32,12,'#94a3b8');const s=Math.min(w,h*.72)/5,gx=(w-s*5)/2,gy=(h-s*5)/2+8;state.cells.forEach(c=>{const x=gx+c.x*s+4,y=gy+c.y*s+4;ctx.fillStyle=c.v?'rgba(34,211,238,.13)':'rgba(255,255,255,.05)';rr(x,y,s-8,s-8,13);ctx.fill();if(c.v){const col=c.v%4===0?'#f0abfc':c.v%3===0?'#fbbf24':accent;glow(col);ctx.fillStyle=col;rr(x+8,y+8,s-24,s-24,10);ctx.fill();resetGlow();text(String(c.v),x+s/2-4,y+s/2+8,24,'#071427');}});}
+  function drawMemory(){text('RECONSTRUCT THE SIGNAL · FIND MATCHING PAIRS',w/2,32,12,'#94a3b8');const s=Math.min(w*.72,h*.72)/4,gx=(w-s*4)/2,gy=(h-s*3)/2+8;state.grid.forEach((c,i)=>{const x=gx+c.x*s+5,y=gy+c.y*s+5;ctx.fillStyle=c.open||c.matched?'rgba(167,139,250,.34)':'rgba(255,255,255,.06)';rr(x,y,s-10,s-10,12);ctx.fill();if(c.open||c.matched)text(['✦','◈','⬢','●','◆','✹'][c.v%6],x+s/2,y+s/2+9,28,c.matched?'#86efac':'#fff');});}
+  function drawStrategy(){text('CLAIM NODES · THREE IN A LINE WINS THE SECTOR',w/2,32,12,'#94a3b8');const s=Math.min(w*.7,h*.72)/5,gx=(w-s*5)/2,gy=(h-s*5)/2+8;state.cells.forEach(c=>{const x=gx+c.x*s+4,y=gy+c.y*s+4;ctx.fillStyle=c.blocked?'rgba(248,113,113,.12)':'rgba(255,255,255,.05)';rr(x,y,s-8,s-8,9);ctx.fill();if(c.v)stars(x+s/2,y+s/2,s*.25,c.v===1?accent:'#fb7185');});}
+  function drawTyping(){text(mode==='quiz'?'DECODE THE FOUR-LETTER KEY':'TYPE THE TRANSMISSION · ENTER TO SEND',w/2,40,12,'#94a3b8');text(state.word,w/2,h*.4,Math.min(54,w/7),accent);text(state.typed+'▌',w/2,h*.58,26,'#fff');const pct=state.word?state.typed.length/state.word.length:0;ctx.fillStyle='rgba(255,255,255,.1)';rr(w*.18,h*.7,w*.64,12,6);ctx.fill();ctx.fillStyle=accent;rr(w*.18,h*.7,w*.64*pct,12,6);ctx.fill();}
+  function drawRunner(){text('MOVE WITH ARROWS / WASD · SURVIVE THE CIRCUIT',w/2,32,12,'#94a3b8');for(let i=0;i<9;i++){const x=((i*91-state.t*80)%w+w)%w;ctx.fillStyle=i%3?'rgba(34,211,238,.15)':'rgba(251,113,133,.5)';rr(x,h*.25+(i%3)*h*.16,30,10,5);ctx.fill();}const x=state.player.x*w,y=state.player.y*h;glow(kits[kit][1]);ctx.fillStyle=kits[kit][1];ctx.beginPath();ctx.arc(x,y,18,0,7);ctx.fill();resetGlow();stars(x,y,9,'#071427');}
+  function drawBreakout(){text('BOUNCE THE PULSE · FRACTURE THE FIREWALL',w/2,32,12,'#94a3b8');const cols=7,rows=4,bw=w*.72/cols,gx=w*.14;state.cells.length||(state.cells=Array.from({length:rows*cols},()=>({v:1})));state.cells.forEach((c,i)=>{if(!c.v)return;const x=gx+(i%cols)*bw+3,y=70+Math.floor(i/cols)*28;ctx.fillStyle=i%2?accent:'#a78bfa';glow(ctx.fillStyle);rr(x,y,bw-6,20,5);ctx.fill();resetGlow();});const p=state.paddle*w;ctx.fillStyle='#fff';rr(p-w*.1,h-50,w*.2,12,6);ctx.fill();ctx.fillStyle=accent;ctx.beginPath();ctx.arc(state.ball.x*w,state.ball.y*h,9,0,7);ctx.fill();}
+  function drawPong(){text('RETURN THE ORBITAL SERVE · FIRST TO 7',w/2,32,12,'#94a3b8');ctx.strokeStyle='rgba(255,255,255,.16)';ctx.setLineDash([7,12]);ctx.beginPath();ctx.moveTo(w/2,65);ctx.lineTo(w/2,h-30);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=accent;rr(25,state.player.y*h-42,12,84,6);ctx.fill();ctx.fillStyle='#fb7185';rr(w-37,state.player.y*h-42,12,84,6);ctx.fill();ctx.beginPath();ctx.arc(state.ball.x*w,state.ball.y*h,9,0,7);ctx.fill();}
+  function drawTower(){text('DROP THE SKYLINE BLOCK · PERFECT PLACEMENT = BONUS',w/2,32,12,'#94a3b8');const s=Math.min(100,w*.2),baseX=w/2-s*2;for(let i=0;i<state.tower.length;i++){ctx.fillStyle=i%2?accent:'#a78bfa';rr(baseX+(i%4)*s,h-55-i*30,s-4,26,6);ctx.fill();}ctx.fillStyle='#fff';rr(state.tower.length%2?w/2-s:w/2,h-55-state.tower.length*30,s,26,6);ctx.fill();}
+  function drawArena(){text('ROCK · PAPER · SCISSORS · READ THE RIVAL',w/2,36,12,'#94a3b8');['✦','◆','●'].forEach((v,i)=>{ctx.strokeStyle=i===0?accent:'#fb7185';ctx.lineWidth=3;ctx.beginPath();ctx.arc(w/2+(i-1)*100,h*.42,42,0,7);ctx.stroke();text(v,w/2+(i-1)*100,h*.42+12,30,'#fff');});text('TAP A SYMBOL',w/2,h*.78,16,'#fff');}
+  function render(){ctx.clearRect(0,0,w,h);bg();if(mode==='aim')drawAim();else if(mode==='merge')drawMerge();else if(mode==='memory')drawMemory();else if(mode==='strategy')drawStrategy();else if(mode==='typing'||mode==='quiz'||mode==='dice')drawTyping();else if(mode==='breakout')drawBreakout();else if(mode==='pong')drawPong();else if(mode==='tower')drawTower();else if(mode==='arena')drawArena();else drawRunner();}
+  function tick(ts){const dt=Math.min(.035,(ts-last)/1000||.016);last=ts;state.t+=dt;if(mode==='runner'){const sp=dt*.55;state.player.x=Math.max(.06,Math.min(.94,state.player.x+(keys.ArrowRight||keys.d?sp:0)-(keys.ArrowLeft||keys.a?sp:0)));state.player.y=Math.max(.18,Math.min(.88,state.player.y+(keys.ArrowDown||keys.s?sp:0)-(keys.ArrowUp||keys.w?sp:0)));if(Math.floor(state.t)%9===0&&Math.random()<.01)addScore(1);}if(mode==='breakout'){state.ball.x+=state.ball.vx*dt;state.ball.y+=state.ball.vy*dt;if(state.ball.x<.04||state.ball.x>.96)state.ball.vx*=-1;if(state.ball.y<.2)state.ball.vy=Math.abs(state.ball.vy);if(state.ball.y>.88){state.ball.y=.5;state.ball.vy=-Math.abs(state.ball.vy);addScore(5);}}if(mode==='pong'){state.ball.x+=state.ball.vx*dt;state.ball.y+=state.ball.vy*dt;if(state.ball.y<.2||state.ball.y>.92)state.ball.vy*=-1;if(state.ball.x<.08||state.ball.x>.92){state.ball.x=.5;state.ball.vx*=-1;addScore(3);}}render();raf=requestAnimationFrame(tick);}
+  function hit(x,y){const r=canvas.getBoundingClientRect(),px=(x-r.left)/r.width,py=(y-r.top)/r.height;if(mode==='aim'){let hit=state.targets.find(t=>!t.hit&&Math.hypot(t.x-px,t.y-py)<t.r/r.width+0.03);if(hit){hit.hit=true;addScore(12);if(state.targets.every(t=>t.hit)){round++;stage.querySelector('#ae-evo-round').textContent=String(round).padStart(2,'0');newAim();}}else addScore(-1);}else if(mode==='merge'){const s=Math.min(w,h*.72)/5,gx=(w-s*5)/2,gy=(h-s*5)/2+8,cx=Math.floor((x-r.left-gx)/r.width*5),cy=Math.floor((y-r.top-gy)/r.height*5);const c=state.cells.find(q=>q.x===cx&&q.y===cy);if(c){c.v=c.v?c.v*2:2;addScore(c.v);}}else if(mode==='memory'){const s=Math.min(w*.72,h*.72)/4,gx=(w-s*4)/2,gy=(h-s*3)/2+8,c=state.grid.find(q=>Math.floor((x-r.left-gx)/s)===q.x&&Math.floor((y-r.top-gy)/s)===q.y);if(c&&!c.matched){c.open=true;if(state.selected===null)state.selected=c;else{if(state.selected.v===c.v){c.matched=true;state.selected.matched=true;addScore(20);}else setTimeout(()=>{c.open=false;state.selected.open=false;},450);state.selected=null;}}}else if(mode==='strategy'){const s=Math.min(w*.7,h*.72)/5,gx=(w-s*5)/2,gy=(h-s*5)/2+8,cx=Math.floor((x-r.left-gx)/s),cy=Math.floor((y-r.top-gy)/s),c=state.cells.find(q=>q.x===cx&&q.y===cy);if(c&&!c.blocked&&!c.v){c.v=1;addScore(8);const rival=state.cells.find(q=>!q.v&&!q.blocked);if(rival)rival.v=2;}}else if(mode==='tower'){state.tower.push(1);addScore(state.tower.length*2);if(state.tower.length>12){state.tower=[];round++;}}else if(mode==='arena'){const v=Math.floor(px*3);addScore(10+v*2);notify(`Relic choice ${v+1} locked · rival scanned`);}else if(mode==='dice'||mode==='quiz'){addScore(5);newQuiz();}else if(mode==='runner'){addScore(3);} }
+  const notify=(s)=>window.ArcadeEvolution?.notify?.(s);
+  canvas.addEventListener('pointerdown',e=>{hit(e.clientX,e.clientY);});
+  stage.querySelector('#ae-action').addEventListener('click',()=>{reset();notify('Mission relaunched');});
+  stage.querySelector('#ae-kit').addEventListener('click',()=>{kit=(kit+1)%kits.length;stage.querySelector('#ae-kit').textContent='KIT: '+kits[kit][0];notify(kits[kit][0]+' loadout equipped');});
+  stage.querySelector('#ae-classic').addEventListener('click',()=>{document.body.classList.remove('ae-new-mode-active');stage.remove();original.forEach(el=>el.style.display=el.dataset.aeOriginalDisplay||'');});
+  window.addEventListener('keydown',e=>{keys[e.key]=true;if((mode==='typing'||mode==='quiz')&&e.key.length===1){state.typed+=e.key.toUpperCase();if(state.typed===state.word){addScore(25);newTyping();notify('Perfect decode · bonus XP');}}if(e.key==='Enter'&&mode==='typing'){addScore(10);newTyping();}if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();});
+  window.addEventListener('keyup',e=>{keys[e.key]=false;});
+  window.addEventListener('resize',resize); resize();reset(); raf=requestAnimationFrame(tick);
+})();
